@@ -126,12 +126,14 @@ CREATE TABLE elder (
     emergency_phone VARCHAR(20) COMMENT 'emergency phone',
     avatar VARCHAR(255) COMMENT 'avatar',
     status TINYINT DEFAULT 1 COMMENT 'status 1=normal 0=left',
+    app_user_id BIGINT COMMENT '关联的普通用户ID(C端健康档案归属)',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted TINYINT DEFAULT 0,
     INDEX idx_name (name),
     INDEX idx_phone (phone),
-    INDEX idx_health_level (health_level)
+    INDEX idx_health_level (health_level),
+    INDEX idx_app_user (app_user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='elder';
 
 CREATE TABLE elder_family (
@@ -234,12 +236,32 @@ CREATE TABLE product_order (
     contact_phone VARCHAR(20) COMMENT 'contact phone',
     total_price DECIMAL(10,2) COMMENT 'total price',
     status TINYINT DEFAULT 1 COMMENT 'status 1=pending 2=paid 3=shipped 4=done 5=cancelled',
+    user_id BIGINT COMMENT '下单用户ID(app_user)',
+    goods_amount DECIMAL(10,2) COMMENT '商品总价',
+    discount_price DECIMAL(10,2) COMMENT '优惠金额',
+    freight DECIMAL(10,2) COMMENT '运费',
+    payable_price DECIMAL(10,2) COMMENT '应付款',
+    pay_type VARCHAR(50) COMMENT '支付方式',
+    pay_time DATETIME COMMENT '支付时间',
+    order_source VARCHAR(50) COMMENT '订单来源',
+    remark VARCHAR(500) COMMENT '备注',
+    product_name VARCHAR(255) COMMENT '首商品名',
+    product_image VARCHAR(500) COMMENT '首商品图',
+    product_count INT COMMENT '商品件数',
+    worker_id BIGINT COMMENT '派单服务人员ID',
+    worker_name VARCHAR(50) COMMENT '派单服务人员姓名',
+    appointment_time DATETIME COMMENT '预约上门时间',
+    dispatch_time DATETIME COMMENT '派单时间',
+    dispatch_user VARCHAR(50) COMMENT '派单人',
+    service_order_no VARCHAR(50) COMMENT '关联工单编号',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted TINYINT DEFAULT 0,
     INDEX idx_order_no (order_no),
     INDEX idx_elder_id (elder_id),
-    INDEX idx_status (status)
+    INDEX idx_status (status),
+    INDEX idx_user (user_id),
+    INDEX idx_worker (worker_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='product order';
 
 CREATE TABLE product_order_item (
@@ -489,6 +511,22 @@ CREATE TABLE app_user (
     nickname VARCHAR(100) COMMENT 'nickname',
     avatar VARCHAR(255) COMMENT 'avatar',
     password VARCHAR(200) COMMENT 'password',
+    real_name VARCHAR(100) COMMENT 'real name',
+    gender TINYINT COMMENT 'gender:0 female 1 male',
+    birth_date DATE COMMENT 'birth date',
+    id_card VARCHAR(18) COMMENT 'id card no',
+    nation VARCHAR(50) COMMENT 'nation',
+    native_place VARCHAR(100) COMMENT 'native place',
+    marriage VARCHAR(20) COMMENT 'marriage status',
+    education VARCHAR(50) COMMENT 'education',
+    occupation VARCHAR(100) COMMENT 'occupation',
+    work_unit VARCHAR(100) COMMENT 'work unit',
+    height DECIMAL(10,2) COMMENT 'height cm',
+    weight DECIMAL(10,2) COMMENT 'weight kg',
+    address VARCHAR(255) COMMENT 'address',
+    emergency_contact VARCHAR(50) COMMENT 'emergency contact',
+    emergency_phone VARCHAR(20) COMMENT 'emergency phone',
+    bio VARCHAR(500) COMMENT 'bio',
     source VARCHAR(50) COMMENT 'register source: APP注册/后台创建',
     role VARCHAR(20) DEFAULT 'FAMILY' COMMENT 'user type: ELDER/FAMILY/VOLUNTEER/STAFF',
     status TINYINT DEFAULT 1 COMMENT 'status',
@@ -1183,3 +1221,260 @@ INSERT INTO activity (name, type, location, description, image_url, start_time, 
 ('智能手机使用培训', '技能培训', '西城区社区服务中心', '帮助老年人掌握智能手机基本操作，跨越数字鸿沟。', 'https://picsum.photos/seed/skill1/400/300', '2026-07-25 09:30:00', '2026-07-25 11:00:00', 1, 54, 'admin', '2026-07-07 15:00:00'),
 ('书法兴趣社团招募', '兴趣社团', '东城区文化活动室', '每周二下午开展书法交流活动，欢迎爱好书法的老年朋友加入。', 'https://picsum.photos/seed/club1/400/300', '2026-07-18 14:00:00', '2026-12-31 17:00:00', 1, 33, 'admin', '2026-07-08 09:00:00'),
 ('老年人防诈骗公益讲座', '公益讲座', '丰台区老年大学', '结合真实案例讲解常见诈骗手法，提升老年人防范意识。', 'https://picsum.photos/seed/lecture1/400/300', '2026-08-01 09:00:00', '2026-08-01 11:00:00', 0, 0, 'admin', '2026-07-09 10:00:00');
+
+-- ===== 以下为部署补齐时新增的表 (2026-07-16 schema drift fix) =====
+-- 补齐 elderly_care_20250921 中代码引用但建库时缺失的 14 张表
+-- 仅作用于自己的库，符合老师红线。所有列按对应实体类反推，保证与代码一致。
+
+CREATE TABLE IF NOT EXISTS `activity_field` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `label` VARCHAR(100) DEFAULT NULL COMMENT '字段标签',
+  `type` VARCHAR(50) DEFAULT NULL COMMENT '字段类型',
+  `options` TEXT COMMENT '选项(JSON)',
+  `required` INT DEFAULT 0 COMMENT '1必填0选填',
+  `status` INT DEFAULT 1 COMMENT '1启用0停用',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='活动报名字段';
+
+CREATE TABLE IF NOT EXISTS `app_message_read` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `message_id` BIGINT NOT NULL COMMENT 'app_message.id',
+  `user_id` BIGINT NOT NULL COMMENT 'app_user.id',
+  `read_time` DATETIME DEFAULT NULL COMMENT '已读时间,空=未读',
+  `hidden` TINYINT DEFAULT 0 COMMENT '1=用户已删除',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_msg_user` (`message_id`,`user_id`),
+  KEY `idx_user` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='C端消息已读/隐藏状态';
+
+CREATE TABLE IF NOT EXISTS `conversation` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `user_id` BIGINT DEFAULT NULL COMMENT '用户ID',
+  `user_name` VARCHAR(50) DEFAULT NULL COMMENT '用户姓名',
+  `user_avatar` VARCHAR(255) DEFAULT NULL COMMENT '用户头像',
+  `phone` VARCHAR(20) DEFAULT NULL COMMENT '手机号',
+  `last_message` TEXT COMMENT '最后一条消息',
+  `unread_count` INT DEFAULT 0 COMMENT '未读消息数',
+  `msg_count` INT DEFAULT 0 COMMENT '消息总数',
+  `status` TINYINT DEFAULT 1 COMMENT '状态:1正常0禁用',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='会话管理';
+
+CREATE TABLE IF NOT EXISTS `conversation_message` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `conversation_id` BIGINT DEFAULT NULL COMMENT '会话ID',
+  `sender_type` INT DEFAULT NULL COMMENT '1用户2客服',
+  `content` TEXT COMMENT '消息内容',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_conversation` (`conversation_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='会话消息';
+
+CREATE TABLE IF NOT EXISTS `dynamic_comment` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `dynamic_id` BIGINT DEFAULT NULL COMMENT '邻里圈动态ID',
+  `user_id` BIGINT DEFAULT NULL COMMENT '评论用户ID',
+  `user_name` VARCHAR(50) DEFAULT NULL COMMENT '评论用户姓名',
+  `content` TEXT COMMENT '评论内容',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_dynamic` (`dynamic_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='邻里圈评论';
+
+CREATE TABLE IF NOT EXISTS `dynamic_favorite` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `dynamic_id` BIGINT DEFAULT NULL COMMENT '邻里圈动态ID',
+  `user_id` BIGINT DEFAULT NULL COMMENT '收藏用户ID',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_dynamic` (`dynamic_id`),
+  KEY `idx_user` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='邻里圈收藏';
+
+CREATE TABLE IF NOT EXISTS `dynamic_like` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `dynamic_id` BIGINT DEFAULT NULL COMMENT '邻里圈动态ID',
+  `user_id` BIGINT DEFAULT NULL COMMENT '点赞用户ID',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_dynamic` (`dynamic_id`),
+  KEY `idx_user` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='邻里圈点赞';
+
+CREATE TABLE IF NOT EXISTS `growth_rule` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `rule_name` VARCHAR(100) NOT NULL COMMENT '规则名称',
+  `rule_code` VARCHAR(50) DEFAULT NULL COMMENT '规则编码',
+  `action_type` VARCHAR(50) DEFAULT NULL COMMENT '触发动作类型',
+  `growth_value` INT DEFAULT 0 COMMENT '成长值',
+  `limit_count` INT DEFAULT 0 COMMENT '每日上限次数',
+  `status` TINYINT DEFAULT 1 COMMENT '状态:1启用0禁用',
+  `remark` VARCHAR(500) DEFAULT NULL COMMENT '备注',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_rule_code` (`rule_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='成长值规则';
+
+CREATE TABLE IF NOT EXISTS `health_service_order` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `elder_id` BIGINT DEFAULT NULL COMMENT '老人ID',
+  `elder_name` VARCHAR(50) DEFAULT NULL COMMENT '老人姓名',
+  `service_name` VARCHAR(100) DEFAULT NULL COMMENT '服务名称',
+  `worker_id` BIGINT DEFAULT NULL COMMENT '服务人员ID',
+  `worker_name` VARCHAR(50) DEFAULT NULL COMMENT '服务人员姓名',
+  `service_time` DATETIME DEFAULT NULL COMMENT '服务时间',
+  `duration` INT DEFAULT NULL COMMENT '时长(分钟)',
+  `status` VARCHAR(20) DEFAULT NULL COMMENT '订单状态',
+  `remark` VARCHAR(500) DEFAULT NULL COMMENT '备注',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='健康服务订单';
+
+CREATE TABLE IF NOT EXISTS `medicine_unit` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(100) DEFAULT NULL COMMENT '单位名称',
+  `description` VARCHAR(500) DEFAULT NULL COMMENT '描述',
+  `status` INT DEFAULT 1 COMMENT '1启用0停用',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='药品单位';
+
+CREATE TABLE IF NOT EXISTS `points_rule` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `rule_name` VARCHAR(100) NOT NULL COMMENT '规则名称',
+  `rule_code` VARCHAR(50) DEFAULT NULL COMMENT '规则编码',
+  `action_type` VARCHAR(50) DEFAULT NULL COMMENT '触发动作类型',
+  `points` INT DEFAULT 0 COMMENT '积分值',
+  `limit_count` INT DEFAULT 0 COMMENT '每日上限次数',
+  `status` TINYINT DEFAULT 1 COMMENT '状态:1启用0禁用',
+  `remark` VARCHAR(500) DEFAULT NULL COMMENT '备注',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_rule_code` (`rule_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='积分规则';
+
+CREATE TABLE IF NOT EXISTS `salary_record` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `worker_id` BIGINT NOT NULL COMMENT '服务人员ID',
+  `worker_name` VARCHAR(50) DEFAULT NULL COMMENT '服务人员姓名',
+  `month` VARCHAR(7) NOT NULL COMMENT '月份: 2026-07',
+  `base_salary` DECIMAL(10,2) DEFAULT 0 COMMENT '基本工资',
+  `commission_total` DECIMAL(10,2) DEFAULT 0 COMMENT '佣金合计',
+  `bonus` DECIMAL(10,2) DEFAULT 0 COMMENT '奖金',
+  `deduction` DECIMAL(10,2) DEFAULT 0 COMMENT '扣款',
+  `total_salary` DECIMAL(10,2) DEFAULT NULL COMMENT '应发工资',
+  `status` TINYINT DEFAULT 0 COMMENT '状态: 0待发放 1已发放',
+  `pay_time` DATETIME DEFAULT NULL COMMENT '发放时间',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_worker_month` (`worker_id`,`month`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='工资记录表';
+
+CREATE TABLE IF NOT EXISTS `service_project` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(100) DEFAULT NULL COMMENT '项目名称',
+  `category` VARCHAR(50) DEFAULT NULL COMMENT '分类',
+  `duration` INT DEFAULT NULL COMMENT '时长(分钟)',
+  `price` DECIMAL(10,2) DEFAULT NULL COMMENT '价格',
+  `method` VARCHAR(50) DEFAULT NULL COMMENT '服务方式',
+  `status` INT DEFAULT 0 COMMENT '1上架0下架',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='养老服务项目';
+
+CREATE TABLE IF NOT EXISTS `sys_operation_log` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `user_id` BIGINT DEFAULT NULL COMMENT '操作人ID',
+  `user_name` VARCHAR(50) DEFAULT NULL COMMENT '操作人',
+  `module` VARCHAR(100) DEFAULT NULL COMMENT '模块',
+  `operation` VARCHAR(200) DEFAULT NULL COMMENT '操作描述',
+  `method` VARCHAR(10) DEFAULT NULL COMMENT 'HTTP方法',
+  `request_uri` VARCHAR(255) DEFAULT NULL COMMENT '请求URI',
+  `ip` VARCHAR(64) DEFAULT NULL COMMENT '操作IP',
+  `params` TEXT COMMENT '请求参数',
+  `status` INT DEFAULT 1 COMMENT '1成功0失败',
+  `error_msg` VARCHAR(500) DEFAULT NULL COMMENT '失败原因',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='操作日志';
+
+
+-- ===== 演示种子数据 (2026-07-16 schema drift 补齐后写入) =====
+-- 重部署若库已存在数据，请先 TRUNCATE 对应表再执行本段。
+INSERT INTO service_project (id, name, category, duration, price, method, status) VALUES
+(1, '居家保洁服务', '生活照料', 120, 99.00, '上门服务', 1),
+(2, '助餐配送服务', '生活照料', 60, 39.00, '上门服务', 1),
+(3, '健康体检套餐', '健康管理', 180, 299.00, '到店服务', 1),
+(4, '康复理疗', '健康管理', 90, 159.00, '上门服务', 1),
+(5, '陪同就医', '生活照料', 240, 199.00, '陪同服务', 1),
+(6, '智能穿戴设备租借', '智慧养老', 30, 49.00, '到店服务', 1);
+INSERT INTO app_message (id, title, content, type, status, target, send_time) VALUES
+(1, '系统通知', '欢迎使用智慧养老系统，您的健康档案已创建成功。', 'system', 1, 'all', '2026-07-16 09:00:00'),
+(2, '活动提醒', '本周六上午9点将在社区活动中心举办健康讲座，欢迎报名参加。', 'activity', 1, 'all', '2026-07-16 10:00:00'),
+(3, '服务提醒', '您预约的居家保洁服务将于明日上门，请保持电话畅通。', 'service', 1, 'all', '2026-07-16 11:00:00'),
+(4, '健康建议', '根据您的健康档案，建议本周增加两次散步，注意低盐饮食。', 'health', 1, 'all', '2026-07-16 12:00:00');
+INSERT INTO conversation (id, user_id, user_name, user_avatar, phone, last_message, unread_count, msg_count, status) VALUES
+(1, 1, '张大爷', 'https://api.dicebear.com/7.x/initials/svg?seed=张', '13800001234', '感谢护理员的悉心照料', 2, 5, 1),
+(2, 2, '李奶奶', 'https://api.dicebear.com/7.x/initials/svg?seed=李', '13800005678', '请问明天还能预约体检吗？', 1, 3, 1);
+INSERT INTO conversation_message (conversation_id, sender_type, content) VALUES
+(1, 1, '您好，我是您的专属护理员小王。'),
+(1, 0, '谢谢你们，老人家很满意。'),
+(1, 1, '不客气，这是我们应该做的，有需要随时联系。'),
+(2, 0, '请问明天还能预约体检吗？'),
+(2, 1, '可以的，我来帮您安排，稍后确认时间。');
+INSERT INTO app_message_read (message_id, user_id, read_time, hidden, create_time) VALUES
+(1, 1, '2026-07-16 09:30:00', 0, '2026-07-16 09:30:00'),
+(1, 2, '2026-07-16 09:35:00', 0, '2026-07-16 09:35:00'),
+(2, 1, '2026-07-16 10:15:00', 0, '2026-07-16 10:15:00'),
+(3, 1, '2026-07-16 11:20:00', 0, '2026-07-16 11:20:00');
+INSERT INTO dynamic_like (dynamic_id, user_id) VALUES
+((SELECT MIN(id) FROM dynamic), 1),
+((SELECT MIN(id) FROM dynamic), 2),
+((SELECT MIN(id) FROM dynamic), 3);
+INSERT INTO dynamic_comment (dynamic_id, user_id, user_name, content) VALUES
+((SELECT MIN(id) FROM dynamic), 1, '王阿姨', '说得太好了，点赞支持！'),
+((SELECT MIN(id) FROM dynamic), 2, '李叔叔', '这个活动我也想参加。'),
+((SELECT MIN(id) FROM dynamic), 4, '赵奶奶', '感谢分享，很实用。');
+INSERT INTO dynamic_favorite (dynamic_id, user_id) VALUES
+((SELECT MIN(id) FROM dynamic), 3),
+((SELECT MIN(id) FROM dynamic), 5);
+INSERT INTO activity_field (label, type, options, required, status) VALUES
+('姓名', 'input', NULL, 1, 1),
+('手机号', 'input', NULL, 1, 1),
+('参与人数', 'number', NULL, 1, 1),
+('备注', 'textarea', NULL, 0, 1);
+INSERT INTO medicine_unit (name, description, status) VALUES
+('片', '片剂', 1),
+('粒', '胶囊', 1),
+('毫升', '液体剂型', 1),
+('支', '注射剂', 1);
+INSERT INTO growth_rule (rule_name, rule_code, action_type, growth_value, limit_count, status, remark) VALUES
+('每日签到', 'daily_sign', 'sign', 5, 1, 1, '每日首次签到获得成长值'),
+('完善健康档案', 'complete_profile', 'profile', 20, 1, 1, '完善个人健康档案'),
+('发布动态', 'publish_dynamic', 'dynamic', 10, 0, 1, '发布一条邻里圈动态');
+INSERT INTO points_rule (rule_name, rule_code, action_type, points, limit_count, status, remark) VALUES
+('每日签到', 'daily_sign', 'sign', 5, 1, 1, '每日首次签到获得积分'),
+('参与活动', 'join_activity', 'activity', 15, 0, 1, '报名并参加一次活动'),
+('邀请好友', 'invite_friend', 'invite', 50, 0, 1, '成功邀请一位好友注册');
+INSERT INTO salary_record (worker_id, worker_name, month, base_salary, commission_total, bonus, deduction, total_salary, status, pay_time) VALUES
+(1, '护理员小王', '2026-07', 5000.00, 800.00, 500.00, 100.00, 6200.00, 1, '2026-07-10 00:00:00'),
+(2, '护理员小李', '2026-07', 5000.00, 600.00, 300.00, 0.00, 5900.00, 1, '2026-07-10 00:00:00');
+INSERT INTO health_service_order (elder_id, elder_name, service_name, worker_id, worker_name, service_time, duration, status, remark) VALUES
+(1, '张大爷', '居家保洁服务', 1, '护理员小王', '2026-07-17 09:00:00', 120, 'pending', '需要打扫客厅和卧室'),
+(2, '李奶奶', '健康体检套餐', 2, '护理员小李', '2026-07-18 14:00:00', 180, 'assigned', '需陪同前往社区医院');
+INSERT INTO sys_operation_log (user_id, user_name, module, operation, method, request_uri, ip, params, status) VALUES
+(1, 'admin', '用户管理', '查询用户列表', 'GET', '/api/user/page', '127.0.0.1', 'current=1&size=10', 1),
+(1, 'admin', '养老服务', '查询服务项目', 'GET', '/api/product/service-project/page', '127.0.0.1', 'current=1&size=10', 1),
+(1, 'admin', '消息管理', '查询消息列表', 'GET', '/api/user/message/page', '127.0.0.1', 'current=1&size=10', 1);

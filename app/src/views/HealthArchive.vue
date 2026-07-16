@@ -1,13 +1,13 @@
 <template>
   <div class="health-archive" v-loading="loading">
     <!-- 无关联档案：空态 -->
-    <el-empty v-if="!loading && elders.length === 0" description="您还没有添加任何健康档案">
-      <template #extra>
-        <el-button type="primary" :icon="Plus" @click="openElderAdd">添加第一位老人档案</el-button>
-      </template>
+    <el-empty v-if="!loading && elders.length === 0">
       <template #description>
         <p>您还没有添加任何健康档案</p>
         <p class="empty-tip">您可以自己添加家人档案，并随时录入血压、血糖等健康数据。</p>
+      </template>
+      <template #default>
+        <el-button type="primary" :icon="Plus" @click="openElderAdd">添加第一位老人档案</el-button>
       </template>
     </el-empty>
 
