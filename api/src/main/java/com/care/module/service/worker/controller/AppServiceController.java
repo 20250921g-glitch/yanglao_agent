@@ -97,11 +97,11 @@ public class AppServiceController {
             if (p.getStatus() != null && p.getStatus() == 1) {
                 return Result.success(p);
             }
-            return Result.error("服务项目不存在或已下架");
+            return Result.notFound("服务项目不存在或已下架");
         }
         ServiceProject p = serviceProjectService.getById(id);
         if (p == null || p.getStatus() == null || p.getStatus() != 1) {
-            return Result.error("服务项目不存在或已下架");
+            return Result.notFound("服务项目不存在或已下架");
         }
         cacheHelper.put(key, p, CacheTtl.SERVICE_DETAIL);
         return Result.success(p);
@@ -141,7 +141,7 @@ public class AppServiceController {
         }
         ServiceProject p = serviceProjectService.getById(projectId);
         if (p == null || p.getStatus() == null || p.getStatus() != 1) {
-            return Result.error("服务项目不存在或已下架");
+            return Result.notFound("服务项目不存在或已下架");
         }
 
         ServiceOrder o = new ServiceOrder();
@@ -207,7 +207,7 @@ public class AppServiceController {
         }
         ServiceOrder o = serviceOrderService.getById(orderId);
         if (o == null) {
-            return Result.error("订单不存在");
+            return Result.notFound("订单不存在");
         }
         List<Long> elderIds = myElderIds(userId);
         if (o.getElderId() == null || !elderIds.contains(o.getElderId())) {

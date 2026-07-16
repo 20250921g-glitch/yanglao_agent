@@ -90,11 +90,11 @@ public class AppMallController {
             if (p.getStatus() != null && p.getStatus() == 1) {
                 return Result.success(p);
             }
-            return Result.error("商品不存在或已下架");
+            return Result.notFound("商品不存在或已下架");
         }
         Product p = productService.getById(id);
         if (p == null || p.getStatus() == null || p.getStatus() != 1) {
-            return Result.error("商品不存在或已下架");
+            return Result.notFound("商品不存在或已下架");
         }
         cacheHelper.put(key, p, CacheTtl.PRODUCT_DETAIL);
         return Result.success(p);
@@ -136,7 +136,7 @@ public class AppMallController {
 
         Product p = productService.getById(productId);
         if (p == null || p.getStatus() == null || p.getStatus() != 1) {
-            return Result.error("商品不存在或已下架");
+            return Result.notFound("商品不存在或已下架");
         }
 
         // 收货老人（可选），若填写则做归属校验
@@ -232,7 +232,7 @@ public class AppMallController {
         }
         ProductOrder o = productOrderService.getById(orderId);
         if (o == null) {
-            return Result.error("订单不存在");
+            return Result.notFound("订单不存在");
         }
         if (o.getUserId() == null || !o.getUserId().equals(userId)) {
             return Result.forbidden("无权操作该订单");

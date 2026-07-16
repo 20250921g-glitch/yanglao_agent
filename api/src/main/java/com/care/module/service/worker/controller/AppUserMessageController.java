@@ -117,7 +117,7 @@ public class AppUserMessageController {
         }
         AppMessage m = appMessageService.getById(id);
         if (m == null) {
-            return Result.error("消息不存在");
+            return Result.notFound("消息不存在");
         }
         upsertRead(id, userId);
         return Result.ok("已读");
