@@ -28,5 +28,5 @@ fi
 
 cd /root/20250921g/backend
 echo "[$(date '+%F %T')] keepalive: 后端未运行，尝试启动..." >> "$LOG"
-# setsid 完全脱离会话；-Xms128m -Xmx256m 控制小内存下占用，降低再次 OOM 概率
-setsid java -Xms128m -Xmx256m -jar "$JAR" --spring.config.location="$CFG" >> "$LOG" 2>&1 &
+# setsid 完全脱离会话；-Xms128m -Xmx160m 控制小内存下占用，降低再次 OOM 概率（1.8G 共享机上多人应用共存，需尽量压低）
+setsid java -Xms128m -Xmx160m -jar "$JAR" --spring.config.location="$CFG" >> "$LOG" 2>&1 &
