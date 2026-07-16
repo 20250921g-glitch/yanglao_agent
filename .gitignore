@@ -1,0 +1,19 @@
+# ===== OS / IDE =====
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# ===== 日志 =====
+*.log
+logs/
+
+# ===== 密钥 / 敏感配置（兜底，各模块 .gitignore 已覆盖）=====
+**/application.yml
+**/application-dev.yml
+**/application-prod.yml
+**/.env
+**/*.pem
+**/*-key.json
+**/*-key.pem

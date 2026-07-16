@@ -1,0 +1,87 @@
+:root {
+  --brand: #00C4A1;
+  --el-color-primary: #00C4A1;
+}
+* { box-sizing: border-box; }
+html, body, #app { height: 100%; margin: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: linear-gradient(135deg, #e8fbf5 0%, #f5f7fa 100%);
+  color: #303133;
+}
+.auth-page, .profile-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.auth-card, .profile-card {
+  width: 400px;
+  max-width: 100%;
+  border-radius: 14px;
+  box-shadow: 0 8px 30px rgba(0,196,161,0.12);
+}
+.brand { text-align: center; margin-bottom: 18px; }
+.brand .logo { font-size: 24px; font-weight: 700; color: var(--brand); }
+.brand .sub { font-size: 13px; color: #909399; margin-top: 4px; }
+.captcha-row { display: flex; gap: 10px; align-items: center; }
+.captcha-row .el-input { flex: 1; }
+.captcha-img {
+  height: 38px;
+  width: 110px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid #dcdfe6;
+  background: #f5f7fa;
+}
+.full { width: 100%; }
+.foot { text-align: center; margin-top: 14px; font-size: 13px; color: #909399; }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.header .title { font-size: 18px; font-weight: 600; color: #303133; }
+
+/* ===== 用户端布局（顶部菜单，无侧边栏） ===== */
+.user-layout { min-height: 100vh; background: #f5f7fa; }
+.top-bar {
+  display: flex; align-items: center; gap: 24px;
+  height: 60px; padding: 0 24px;
+  background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  position: sticky; top: 0; z-index: 100;
+}
+.top-bar .brand { display: flex; align-items: center; gap: 8px; cursor: pointer; flex-shrink: 0; }
+.top-bar .brand .logo { font-size: 20px; font-weight: 700; color: var(--brand); }
+.top-bar .brand .tag {
+  font-size: 12px; color: #fff; background: var(--brand);
+  padding: 2px 8px; border-radius: 10px;
+}
+.top-bar .top-menu { flex: 1; border-bottom: none; }
+.top-bar .el-menu--horizontal > .el-menu-item { height: 60px; line-height: 60px; }
+.top-bar .user-area { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.top-bar .user-area .uname { font-size: 14px; color: #303133; }
+.main-content { max-width: 1100px; margin: 0 auto; padding: 24px; }
+
+/* ===== 首页 ===== */
+.home .info-card { margin-bottom: 24px; }
+.home .info-head { display: flex; align-items: center; gap: 16px; margin-bottom: 18px; }
+.home .info-base .name { font-size: 20px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.home .info-base .sub { font-size: 13px; color: #909399; margin-top: 4px; }
+.home .section-title { font-size: 16px; font-weight: 600; margin: 8px 0 16px; }
+.feature-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px;
+}
+.feature-card {
+  background: #fff; border-radius: 12px; padding: 20px; text-align: center;
+  cursor: pointer; transition: all .2s; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.feature-card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,196,161,0.15); }
+.f-icon {
+  width: 48px; height: 48px; border-radius: 12px; color: #fff; font-size: 20px;
+  font-weight: 700; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px;
+}
+.f-name { font-size: 15px; font-weight: 500; }
+.f-status { font-size: 12px; color: #c0c4cc; margin-top: 4px; }
+
+/* ===== 功能待开发占位页 ===== */
+.placeholder-card { text-align: center; }
+.ph-title { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+.ph-tip { font-size: 13px; color: #909399; margin-bottom: 16px; }

@@ -1,0 +1,80 @@
+server:
+  port: 8080
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+spring:
+  application:
+    name: elderly-care-api
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/elderly_care?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: ${DB_PASSWORD}   # 真实密码请勿提交, 用环境变量或本地 application.yml 提供
+  redis:
+    host: localhost
+    port: 6379
+    password:
+    database: 0
+    timeout: 5000
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
+        max-wait: -1ms
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+    charset: UTF-8
+
+mybatis-plus:
+  mapper-locations: classpath*:mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+jwt:
+  secret: ${JWT_SECRET}   # 请替换为强随机值, 勿使用默认值/提交真实值
+  expiration: 604800000  # 7天
+
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
+  openapi:
+    title: 智慧养老后台管理系统API
+    description: 提供智慧养老系统的后台管理接口
+    version: 1.0.0
+    contact:
+      name: Daisy
+      email: daisy@elderlycare.com
+
+logging:
+  level:
+    com.care: debug
+
+# DeepSeek 大模型配置
+# 真实密钥请用环境变量 DEEPSEEK_API_KEY 注入, 勿提交到仓库
+# 留空则 /api/app/ai/health-advice 走降级文案(不调用外部大模型)
+deepseek:
+  api-key: ${DEEPSEEK_API_KEY}
+  base-url: https://api.deepseek.com/v1
+  model: deepseek-chat
+  timeout: 15000
+
+# 短信验证码配置
+# dev-mode=true: 接口响应中返回明文验证码, 便于本地联调/演示
+# 上线/生产环境务必改为 false: 关闭明文返回, 验证码改走真实短信网关(接入位见 SmsService.sendViaGateway)
+sms:
+  dev-mode: ${SMS_DEV_MODE:true}
