@@ -1,5 +1,17 @@
 <template>
   <div class="home" v-loading="loading">
+    <!-- 轮播图 -->
+    <el-carousel v-if="banners.length" height="160px" indicator-position="outside" class="home-banner">
+      <el-carousel-item v-for="b in banners" :key="b.id">
+        <img
+          class="banner-img"
+          :src="b.imageUrl"
+          :alt="b.title"
+          @click="openBanner(b)"
+        />
+      </el-carousel-item>
+    </el-carousel>
+
     <!-- 个人信息卡 -->
     <el-card class="info-card" shadow="never">
       <div class="info-head">
@@ -49,15 +61,27 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { currentUser, fetchUser } from '@/store/user'
+import { getBanners } from '@/api'
 
 const router = useRouter()
 const loading = ref(false)
 const user = currentUser
+const banners = ref([])
 
 const avatarText = computed(() => {
   const name = user.value ? (user.value.username || '用') : '用'
   return name.charAt(0)
 })
+
+const openBanner = (b) => {
+  if (b.linkUrl) {
+    if (b.linkUrl.startsWith('http')) {
+      window.open(b.linkUrl, '_blank')
+    } else {
+      router.push(b.linkUrl)
+    }
+  }
+}
 
 // 养老系统为普通用户规划的功能模块（后续逐个开发）
 const features = [
@@ -82,5 +106,34 @@ const load = async () => {
   }
 }
 
-onMounted(load)
+const loadBanners = async () => {
+  try {
+    const res = await getBanners()
+    if (res && res.data && res.data.records) {
+      banners.value = res.data.records
+    }
+  } catch (e) {
+    // 轮播图加载失败不影响主页其他功能
+  }
+}
+
+onMounted(() => {
+  load()
+  loadBanners()
+})
 </script>
+
+<style scoped>
+.home-banner {
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.banner-img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  display: block;
+  cursor: pointer;
+}
+</style>

@@ -208,6 +208,28 @@ public class AppMallController {
         return Result.ok("下单成功，请及时付款");
     }
 
+    @ApiOperation("支付订单（模拟支付）")
+    @PostMapping("/pay/{orderId}")
+    @Transactional(rollbackFor = Exception.class)
+    public Result<Void> pay(@PathVariable Long orderId,
+                            @RequestBody(required = false) Map<String, Object> body,
+                            HttpServletRequest request) {
+        Long userId = currentUserId(request);
+        if (userId == null) {
+            return Result.unauthorized("未登录");
+        }
+        String payType = "余额支付";
+        if (body != null && body.get("payType") != null && !String.valueOf(body.get("payType")).trim().isEmpty()) {
+            payType = String.valueOf(body.get("payType")).trim();
+        }
+        try {
+            productOrderService.pay(orderId, userId, payType);
+        } catch (RuntimeException e) {
+            return Result.error(e.getMessage());
+        }
+        return Result.ok("支付成功");
+    }
+
     @ApiOperation("我的商城订单")
     @GetMapping("/my-orders")
     public Result<PageResult<ProductOrder>> myOrders(

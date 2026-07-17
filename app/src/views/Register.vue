@@ -26,6 +26,14 @@
         <el-form-item label="昵称" prop="nickname">
           <el-input v-model="form.nickname" placeholder="选填，默认手机号用户" />
         </el-form-item>
+        <el-form-item label="身份类型" prop="role">
+          <el-radio-group v-model="form.role">
+            <el-radio value="ELDER">老人</el-radio>
+            <el-radio value="FAMILY">家属</el-radio>
+            <el-radio value="VOLUNTEER">志愿者</el-radio>
+            <el-radio value="STAFF">工作人员</el-radio>
+          </el-radio-group>
+        </el-form-item>
         <el-form-item label="图形验证码" prop="captchaCode">
           <div class="captcha-row">
             <el-input v-model="form.captchaCode" placeholder="请输入右侧字符" maxlength="4" />
@@ -55,7 +63,7 @@ const captchaKey = ref('')
 const captchaImage = ref('')
 const countdown = ref(0)
 let timer = null
-const form = reactive({ phone: '', smsCode: '', password: '', confirm: '', nickname: '', captchaCode: '' })
+const form = reactive({ phone: '', smsCode: '', password: '', confirm: '', nickname: '', role: 'FAMILY', captchaCode: '' })
 
 const rules = {
   phone: [
@@ -111,6 +119,7 @@ const submit = async () => {
       phone: form.phone,
       password: form.password,
       nickname: form.nickname,
+      role: form.role,
       smsCode: form.smsCode,
       captchaKey: captchaKey.value,
       captchaCode: form.captchaCode

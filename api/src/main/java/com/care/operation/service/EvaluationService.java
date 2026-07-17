@@ -25,6 +25,12 @@ public class EvaluationService extends ServiceImpl<EvaluationMapper, Evaluation>
     }
 
     public void add(Evaluation evaluation) {
+        if (evaluation.getElderId() == null) {
+            throw new RuntimeException("请选择老人");
+        }
+        if (evaluation.getTitle() == null || evaluation.getTitle().trim().isEmpty()) {
+            throw new RuntimeException("请输入测评标题");
+        }
         save(evaluation);
     }
 

@@ -71,10 +71,11 @@
           <el-table-column label="状态" width="100">
             <template #default="{ row }"><el-tag :type="orderStatusTag[row.status]" size="small">{{ orderStatusText[row.status] || '未知' }}</el-tag></template>
           </el-table-column>
-          <el-table-column label="操作" width="90" fixed="right">
+          <el-table-column label="操作" width="160" fixed="right">
             <template #default="{ row }">
+              <el-button v-if="row.status === 1" type="primary" size="small" @click="openPay(row)">去付款</el-button>
               <el-button v-if="row.status === 1 || row.status === 2" type="danger" size="small" plain @click="doCancel(row)">取消</el-button>
-              <span v-else>—</span>
+              <span v-if="row.status !== 1 && row.status !== 2">—</span>
             </template>
           </el-table-column>
         </el-table>
@@ -124,6 +125,30 @@
         </div>
       </template>
     </el-dialog>
+
+    <!-- 支付对话框 -->
+    <el-dialog v-model="payVisible" title="选择支付方式" width="460px">
+      <div v-if="payOrder" class="pay-preview">
+        <div class="pp-row"><span>订单号</span><b>{{ payOrder.orderNo }}</b></div>
+        <div class="pp-row"><span>商品</span><b>{{ payOrder.productName }}</b></div>
+        <div class="pp-row"><span>应付金额</span><b class="pp-amount">¥{{ rowTotal }}</b></div>
+      </div>
+      <el-form label-width="90px" style="margin-top:14px">
+        <el-form-item label="支付方式">
+          <el-select v-model="payForm.payType" style="width:100%">
+            <el-option label="微信支付" value="微信支付" />
+            <el-option label="支付宝" value="支付宝" />
+            <el-option label="余额支付" value="余额支付" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="pay-footer">
+          <el-button @click="payVisible = false">取消</el-button>
+          <el-button type="primary" :loading="paying" @click="submitPay">确认支付</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -131,7 +156,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
-  getMallProducts, getMallElders, createMallOrder, myMallOrders, cancelMallOrder
+  getMallProducts, getMallElders, createMallOrder, myMallOrders, cancelMallOrder, payMallOrder
 } from '@/api'
 
 // product_order status: 1待付款 2待接单 3待服务 4已完成 5已关闭 6退款售后
@@ -266,6 +291,37 @@ const reloadMine = () => {
   loadMine()
 }
 
+const payVisible = ref(false)
+const paying = ref(false)
+const payOrder = ref(null)
+const payForm = reactive({ payType: '微信支付' })
+
+const rowTotal = computed(() => {
+  if (!payOrder.value) return '0.00'
+  return (payOrder.value.totalPrice != null ? Number(payOrder.value.totalPrice).toFixed(2) : '0.00')
+})
+
+const openPay = (row) => {
+  payOrder.value = row
+  payForm.payType = '微信支付'
+  payVisible.value = true
+}
+
+const submitPay = async () => {
+  if (!payOrder.value) return
+  paying.value = true
+  try {
+    await payMallOrder(payOrder.value.id, payForm.payType)
+    ElMessage.success('支付成功')
+    payVisible.value = false
+    loadMine()
+  } catch (e) {
+    ElMessage.error(e.message || '支付失败')
+  } finally {
+    paying.value = false
+  }
+}
+
 const doCancel = async (row) => {
   await ElMessageBox.confirm(`确认取消订单「${row.productName}」？`, '提示', { type: 'warning' })
   try {
@@ -309,4 +365,8 @@ onMounted(loadProducts)
 .buy-footer { display: flex; align-items: center; justify-content: space-between; }
 .buy-total { font-size: 14px; color: #606266; }
 .buy-total b { font-size: 18px; color: #F56C6C; }
+.pay-preview { background: #f7fbfa; padding: 12px; border-radius: 8px; }
+.pp-row { display: flex; justify-content: space-between; font-size: 14px; color: #606266; padding: 4px 0; }
+.pp-amount { color: #F56C6C; font-size: 16px; }
+.pay-footer { display: flex; justify-content: flex-end; gap: 8px; }
 </style>

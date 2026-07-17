@@ -81,6 +81,10 @@
 
               <!-- 健康数据 -->
               <el-tab-pane label="健康数据" name="data">
+                <div class="tab-toolbar">
+                  <el-button type="primary" size="small" :icon="Plus" :disabled="!selectedElderId" @click="openRecordAddForType">添加{{ recordType }}数据</el-button>
+                  <span class="toolbar-tip">您可随时录入血压、血糖等健康数据</span>
+                </div>
                 <div class="type-tabs">
                   <el-radio-group v-model="recordType">
                     <el-radio-button v-for="t in recordTypes" :key="t" :value="t">{{ t }}</el-radio-button>
@@ -167,12 +171,23 @@
 
               <!-- 家属 -->
               <el-tab-pane label="家属信息" name="family">
-                <el-table :data="family" stripe>
+                <div class="tab-toolbar">
+                  <el-button type="primary" size="small" :icon="Plus" :disabled="!selectedElderId" @click="openFamilyAdd">添加家属</el-button>
+                  <span class="toolbar-tip">您可随时维护老人家属信息</span>
+                </div>
+                <el-table :data="family" stripe v-if="family.length">
                   <el-table-column prop="familyName" label="家属姓名" width="160" />
                   <el-table-column prop="relation" label="关系" width="160" />
                   <el-table-column prop="phone" label="联系电话" />
+                  <el-table-column prop="remark" label="备注" show-overflow-tooltip />
+                  <el-table-column label="操作" width="120" fixed="right">
+                    <template #default="{ row }">
+                      <el-button link size="small" :icon="Edit" @click="openFamilyEdit(row)">编辑</el-button>
+                      <el-button type="danger" link size="small" :icon="Delete" @click="deleteFamily(row)">删除</el-button>
+                    </template>
+                  </el-table-column>
                 </el-table>
-                <el-empty v-if="!family.length" description="暂无家属信息" />
+                <el-empty v-else description="暂无家属信息" />
               </el-tab-pane>
 
               <!-- AI 健康建议 -->
@@ -265,6 +280,30 @@
         <el-button type="primary" :loading="recordDialog.loading" @click="submitRecord">保存</el-button>
       </template>
     </el-dialog>
+
+    <!-- 家属 新增/编辑 -->
+    <el-dialog :title="familyDialog.isEdit ? '编辑家属' : '添加家属'" v-model="familyDialog.visible" width="480px" @closed="resetFamilyForm">
+      <el-form :model="familyDialog.form" label-width="92px">
+        <el-form-item label="老人" required>
+          <el-input :model-value="elderInfo.name" disabled />
+        </el-form-item>
+        <el-form-item label="家属姓名" required><el-input v-model="familyDialog.form.familyName" placeholder="请输入家属姓名" /></el-form-item>
+        <el-form-item label="关系" required>
+          <el-select v-model="familyDialog.form.relation" placeholder="请选择关系" style="width:100%">
+            <el-option value="配偶" label="配偶" />
+            <el-option value="子女" label="子女" />
+            <el-option value="兄弟姐妹" label="兄弟姐妹" />
+            <el-option value="其他" label="其他" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="联系电话"><el-input v-model="familyDialog.form.phone" placeholder="请输入联系电话" /></el-form-item>
+        <el-form-item label="备注"><el-input v-model="familyDialog.form.remark" type="textarea" :rows="2" placeholder="可选" /></el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="familyDialog.visible = false">取消</el-button>
+        <el-button type="primary" :loading="familyDialog.loading" @click="submitFamily">保存</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -276,7 +315,8 @@ import { DataLine, TrendCharts, Top, Bottom, MagicStick, InfoFilled, Plus, Edit,
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import { getMyElders, getElderArchive, getHealthRecords, getDiseases, getFamily, getHealthAdvice,
-  addElder, updateElderApi, deleteElderApi, addHealthRecordApi, deleteHealthRecordApi } from '@/api'
+  addElder, updateElderApi, deleteElderApi, addHealthRecordApi, deleteHealthRecordApi,
+  addFamilyApi, updateFamilyApi, deleteFamilyApi } from '@/api'
 
 const loading = ref(false)
 const aiLoading = ref(false)
@@ -496,6 +536,10 @@ const resetRecordForm = () => {
   Object.assign(recordDialog.form, { recordType: recordType.value || '血压', recordValue: '', recordTime: '', remark: '' })
 }
 const openRecordAdd = () => { resetRecordForm(); recordDialog.visible = true }
+const openRecordAddForType = () => {
+  Object.assign(recordDialog.form, { recordType: recordType.value || '血压', recordValue: '', recordTime: '', remark: '' })
+  recordDialog.visible = true
+}
 const submitRecord = async () => {
   if (!selectedElderId.value) {
     ElMessage.warning('请先选择一位老人')
@@ -539,6 +583,69 @@ const deleteRecord = async (row) => {
     await loadElderData(selectedElderId.value)
     aiAdvice.value = ''
     aiCached.value = false
+  } catch (e) {
+    ElMessage.error(e.message || '删除失败')
+  }
+}
+
+// ===================== 自助维护：家属信息 =====================
+const familyDialog = reactive({ visible: false, loading: false, isEdit: false, id: null, form: { familyName: '', relation: '', phone: '', remark: '' } })
+const resetFamilyForm = () => {
+  Object.assign(familyDialog.form, { familyName: '', relation: '', phone: '', remark: '' })
+  familyDialog.isEdit = false
+  familyDialog.id = null
+}
+const openFamilyAdd = () => {
+  if (!selectedElderId.value) {
+    ElMessage.warning('请先选择老人')
+    return
+  }
+  resetFamilyForm()
+  familyDialog.visible = true
+}
+const openFamilyEdit = (row) => {
+  Object.assign(familyDialog.form, { familyName: row.familyName, relation: row.relation, phone: row.phone || '', remark: row.remark || '' })
+  familyDialog.isEdit = true
+  familyDialog.id = row.id
+  familyDialog.visible = true
+}
+const submitFamily = async () => {
+  if (!selectedElderId.value) {
+    ElMessage.warning('请先选择老人')
+    return
+  }
+  if (!familyDialog.form.familyName || !familyDialog.form.relation) {
+    ElMessage.warning('请填写家属姓名和关系')
+    return
+  }
+  familyDialog.loading = true
+  try {
+    const payload = { elderId: selectedElderId.value, familyName: familyDialog.form.familyName, relation: familyDialog.form.relation, phone: familyDialog.form.phone || '', remark: familyDialog.form.remark || '' }
+    if (familyDialog.isEdit) {
+      await updateFamilyApi(familyDialog.id, payload)
+      ElMessage.success('家属已更新')
+    } else {
+      await addFamilyApi(payload)
+      ElMessage.success('家属已添加')
+    }
+    familyDialog.visible = false
+    await loadElderData(selectedElderId.value)
+  } catch (e) {
+    ElMessage.error(e.message || '保存失败')
+  } finally {
+    familyDialog.loading = false
+  }
+}
+const deleteFamily = async (row) => {
+  try {
+    await ElMessageBox.confirm('确定删除该家属信息？', '删除确认', { type: 'warning' })
+  } catch (e) {
+    return
+  }
+  try {
+    await deleteFamilyApi(row.id)
+    ElMessage.success('已删除')
+    await loadElderData(selectedElderId.value)
   } catch (e) {
     ElMessage.error(e.message || '删除失败')
   }

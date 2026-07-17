@@ -18,8 +18,10 @@
     </el-form>
 
     <el-table :data="tableData" stripe v-loading="loading">
-      <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column prop="targetId" label="目标ID" width="100" />
+      <el-table-column prop="id" label="ID" width="70" />
+      <el-table-column prop="dynamicId" label="动态ID" width="90" />
+      <el-table-column prop="userName" label="评论用户" width="120" />
+      <el-table-column prop="content" label="评论内容" min-width="220" show-overflow-tooltip />
       <el-table-column label="状态" width="90" align="center">
         <template #default="{ row }">
           <el-tag :type="row.status === 1 ? 'success' : 'info'" size="small">{{ row.status === 1 ? '正常' : '禁用' }}</el-tag>

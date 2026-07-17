@@ -187,6 +187,7 @@ public class AppDynamicController {
         m.put("favorited", favoriteService.favorited(id, userId));
         List<DynamicComment> comments = commentService.lambdaQuery()
                 .eq(DynamicComment::getDynamicId, id)
+                .eq(DynamicComment::getStatus, 1)
                 .orderByAsc(DynamicComment::getCreateTime)
                 .list();
         m.put("comments", comments);
@@ -328,6 +329,7 @@ public class AppDynamicController {
         c.setUserId(userId);
         c.setUserName(u == null ? null : u.getUsername());
         c.setContent(content);
+        c.setStatus(1);
         commentService.save(c);
         dynamicService.evictCounts(dynId);
         // 自动通知动态作者（本人评论自己的动态不通知）

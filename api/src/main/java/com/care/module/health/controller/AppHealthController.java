@@ -127,6 +127,63 @@ public class AppHealthController {
         return Result.success(elderFamilyService.getByElderId(elderId));
     }
 
+    @ApiOperation("新增家属（需归属本人）")
+    @PostMapping("/family")
+    public Result<ElderFamily> addFamily(@RequestBody ElderFamily family, HttpServletRequest request) {
+        Long userId = currentUserId(request);
+        if (userId == null) {
+            return Result.unauthorized("未登录");
+        }
+        if (family == null || family.getElderId() == null
+                || !StringUtils.hasText(family.getFamilyName())) {
+            return Result.error("请填写老人档案和家属姓名");
+        }
+        if (checkOwnership(family.getElderId(), userId) == null) {
+            return Result.forbidden("无权为该档案添加家属");
+        }
+        family.setId(null);
+        elderFamilyService.add(family);
+        return Result.success(family);
+    }
+
+    @ApiOperation("修改家属（需归属本人）")
+    @PutMapping("/family/{id}")
+    public Result<Void> updateFamily(@PathVariable Long id, @RequestBody ElderFamily body, HttpServletRequest request) {
+        Long userId = currentUserId(request);
+        if (userId == null) {
+            return Result.unauthorized("未登录");
+        }
+        ElderFamily family = elderFamilyService.getById(id);
+        if (family == null) {
+            return Result.error("家属不存在");
+        }
+        if (checkOwnership(family.getElderId(), userId) == null) {
+            return Result.forbidden("无权修改该家属");
+        }
+        body.setId(id);
+        body.setElderId(family.getElderId());
+        elderFamilyService.updateFamily(body);
+        return Result.ok("Update success");
+    }
+
+    @ApiOperation("删除家属（需归属本人）")
+    @DeleteMapping("/family/{id}")
+    public Result<Void> deleteFamily(@PathVariable Long id, HttpServletRequest request) {
+        Long userId = currentUserId(request);
+        if (userId == null) {
+            return Result.unauthorized("未登录");
+        }
+        ElderFamily family = elderFamilyService.getById(id);
+        if (family == null) {
+            return Result.ok("Delete success");
+        }
+        if (checkOwnership(family.getElderId(), userId) == null) {
+            return Result.forbidden("无权删除该家属");
+        }
+        elderFamilyService.delete(id);
+        return Result.ok("Delete success");
+    }
+
     @ApiOperation("健康科普-疾病宝典（只读，按状态筛选，不区分归属）")
     @GetMapping("/diseases")
     public Result<List<Disease>> diseases(@RequestParam(required = false, defaultValue = "1") Integer status) {

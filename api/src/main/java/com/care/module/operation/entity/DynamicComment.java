@@ -16,5 +16,6 @@ public class DynamicComment {
     private Long userId;
     private String userName;
     private String content;
+    private Integer status;
     private LocalDateTime createTime;
 }

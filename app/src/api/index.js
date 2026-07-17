@@ -36,12 +36,22 @@ export const appLogin = (data) => request.post('/app/user/login', data)
 export const appInfo = () => request.get('/app/user/info')
 export const appUpdateUser = (data) => request.post('/app/user/update', data)
 
+// ===== 首页轮播图（运营后台维护，status=1 启用）=====
+export const getBanners = (position) => {
+  const params = { status: 1, pageSize: 10 }
+  if (position) params.position = position
+  return request.get('/operation/banner/page', { params })
+}
+
 // ===== C端健康档案（读 + 自助维护）=====
 export const getMyElders = () => request.get('/app/health/elders')
 export const getElderArchive = (id) => request.get(`/app/health/elder/${id}`)
 export const getHealthRecords = (params) => request.get('/app/health/records', { params })
 export const getDiseases = (status = 1) => request.get('/app/health/diseases', { params: { status } })
 export const getFamily = (elderId) => request.get('/app/health/family', { params: { elderId } })
+export const addFamilyApi = (data) => request.post('/app/health/family', data)
+export const updateFamilyApi = (id, data) => request.put(`/app/health/family/${id}`, data)
+export const deleteFamilyApi = (id) => request.delete(`/app/health/family/${id}`)
 // 自助维护：老人档案
 export const addElder = (data) => request.post('/app/health/elder', data)
 export const updateElderApi = (id, data) => request.put(`/app/health/elder/${id}`, data)
@@ -88,6 +98,7 @@ export const getMallElders = () => request.get('/app/mall/elders')
 export const createMallOrder = (data) => request.post('/app/mall/order', data)
 export const myMallOrders = (params) => request.get('/app/mall/my-orders', { params })
 export const cancelMallOrder = (orderId) => request.post(`/app/mall/cancel/${orderId}`)
+export const payMallOrder = (orderId, payType) => request.post(`/app/mall/pay/${orderId}`, { payType })
 
 // ===== C端消息通知 =====
 export const getMessageList = (params) => request.get('/app/message/list', { params })

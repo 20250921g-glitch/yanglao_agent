@@ -287,6 +287,8 @@ CREATE TABLE evaluation (
     score INT COMMENT 'score',
     elder_id BIGINT COMMENT 'elder id',
     elder_name VARCHAR(100) COMMENT 'elder name',
+    evaluator VARCHAR(100) COMMENT 'evaluator',
+    conclusion TEXT COMMENT 'conclusion',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     deleted TINYINT DEFAULT 0,
     INDEX idx_elder_id (elder_id)
@@ -676,6 +678,10 @@ CREATE TABLE institution (
     INDEX idx_name (name),
     INDEX idx_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='institution';
+
+INSERT INTO institution (name, code, type, address, contact, phone, email, license, capacity, staff_count, rating, description, status) VALUES
+('阳光康泰养老中心', 'YL-001', '综合养老院', '北京市朝阳区安立路 88 号', '王院长', '010-88886666', 'yangguang@example.com', '京民证字第 1101052026001 号', 200, 45, 4.5, '集生活照料、康复护理、医疗照护于一体的综合性养老服务机构。', 1),
+('爱龄家护理院', 'YL-002', '护理院', '北京市海淀区复兴路 66 号', '李主任', '010-66668888', 'ailing@example.com', '京卫证字第 1101082026002 号', 120, 32, 4.2, '专注老年慢病管理和术后康复护理。', 1);
 
 CREATE TABLE activity (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -1294,6 +1300,7 @@ CREATE TABLE IF NOT EXISTS `dynamic_comment` (
   `user_id` BIGINT DEFAULT NULL COMMENT '评论用户ID',
   `user_name` VARCHAR(50) DEFAULT NULL COMMENT '评论用户姓名',
   `content` TEXT COMMENT '评论内容',
+  `status` TINYINT DEFAULT 1 COMMENT '状态:1正常 0禁用',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_dynamic` (`dynamic_id`)
@@ -1455,10 +1462,10 @@ INSERT INTO dynamic_like (dynamic_id, user_id) VALUES
 ((SELECT MIN(id) FROM dynamic), 1),
 ((SELECT MIN(id) FROM dynamic), 2),
 ((SELECT MIN(id) FROM dynamic), 3);
-INSERT INTO dynamic_comment (dynamic_id, user_id, user_name, content) VALUES
-((SELECT MIN(id) FROM dynamic), 1, '王阿姨', '说得太好了，点赞支持！'),
-((SELECT MIN(id) FROM dynamic), 2, '李叔叔', '这个活动我也想参加。'),
-((SELECT MIN(id) FROM dynamic), 4, '赵奶奶', '感谢分享，很实用。');
+INSERT INTO dynamic_comment (dynamic_id, user_id, user_name, content, status) VALUES
+((SELECT MIN(id) FROM dynamic), 1, '王阿姨', '说得太好了，点赞支持！', 1),
+((SELECT MIN(id) FROM dynamic), 2, '李叔叔', '这个活动我也想参加。', 1),
+((SELECT MIN(id) FROM dynamic), 4, '赵奶奶', '感谢分享，很实用。', 1);
 INSERT INTO dynamic_favorite (dynamic_id, user_id) VALUES
 ((SELECT MIN(id) FROM dynamic), 3),
 ((SELECT MIN(id) FROM dynamic), 5);

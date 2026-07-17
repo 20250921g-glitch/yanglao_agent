@@ -15,6 +15,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -71,6 +72,7 @@ public class AppActivityController {
 
     @ApiOperation("当前用户报名活动")
     @PostMapping("/register")
+    @Transactional(rollbackFor = Exception.class)
     public Result<?> register(@RequestBody RegisterDTO dto) {
         Long userId = uid();
         if (userId == null) return Result.unauthorized("请先登录");
@@ -103,16 +105,20 @@ public class AppActivityController {
         reg.setRemark(dto.getRemark());
         registrationService.save(reg);
 
-        // 报名成功后自动给用户发送消息通知
+        // 报名成功后自动给用户发送消息通知（失败不阻断主流程）
         try {
             appMessageService.sendToUser(userId, "活动报名成功",
                     "您已成功报名活动【" + activity.getName() + "】，请留意活动开始时间。", "系统通知");
         } catch (Exception ignored) {
         }
 
-        Integer pc = activity.getParticipantCount() == null ? 0 : activity.getParticipantCount();
-        activity.setParticipantCount(pc + 1);
-        activityService.updateById(activity);
+        // 参与人数 +1（非核心操作，失败不影响报名结果）
+        try {
+            Integer pc = activity.getParticipantCount() == null ? 0 : activity.getParticipantCount();
+            activity.setParticipantCount(pc + 1);
+            activityService.updateById(activity);
+        } catch (Exception ignored) {
+        }
 
         return Result.success("报名成功");
     }

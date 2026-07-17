@@ -16,6 +16,8 @@ public class Evaluation implements Serializable {
     private Integer score;
     private Long elderId;
     private String elderName;
+    private String evaluator;
+    private String conclusion;
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 }

@@ -19,13 +19,13 @@ public class DynamicCommentService extends ServiceImpl<DynamicCommentMapper, Dyn
             return new HashMap<>();
         }
         LambdaQueryWrapper<DynamicComment> w = new LambdaQueryWrapper<>();
-        w.in(DynamicComment::getDynamicId, dynamicIds);
+        w.in(DynamicComment::getDynamicId, dynamicIds).eq(DynamicComment::getStatus, 1);
         return list(w).stream().collect(Collectors.groupingBy(DynamicComment::getDynamicId, Collectors.counting()));
     }
 
     public long countByDynamicId(Long dynamicId) {
         LambdaQueryWrapper<DynamicComment> w = new LambdaQueryWrapper<>();
-        w.eq(DynamicComment::getDynamicId, dynamicId);
+        w.eq(DynamicComment::getDynamicId, dynamicId).eq(DynamicComment::getStatus, 1);
         return count(w);
     }
 }

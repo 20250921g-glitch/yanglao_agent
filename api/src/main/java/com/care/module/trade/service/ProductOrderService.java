@@ -11,8 +11,10 @@ import com.care.module.trade.mapper.ProductOrderItemMapper;
 import com.care.module.trade.mapper.ProductOrderMapper;
 import com.care.module.user.entity.AppUser;
 import com.care.module.user.mapper.AppUserMapper;
+import com.care.module.user.service.AppMessageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
@@ -27,6 +29,8 @@ public class ProductOrderService extends ServiceImpl<ProductOrderMapper, Product
     private ProductOrderItemMapper productOrderItemMapper;
     @Autowired
     private AppUserMapper appUserMapper;
+    @Autowired
+    private AppMessageService appMessageService;
 
     private static final DateTimeFormatter DTF = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -180,6 +184,37 @@ public class ProductOrderService extends ServiceImpl<ProductOrderMapper, Product
         if (order == null) throw new RuntimeException("订单不存在");
         order.setStatus(5);
         updateById(order);
+    }
+
+    /**
+     * 模拟支付：将待付款(1)的订单完成支付，流转为已支付待接单(2)，
+     * 写入支付方式与支付时间，并向用户推送支付成功通知。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void pay(Long orderId, Long userId, String payType) {
+        ProductOrder order = getById(orderId);
+        if (order == null) throw new RuntimeException("订单不存在");
+        if (order.getUserId() == null || !order.getUserId().equals(userId)) {
+            throw new RuntimeException("无权操作该订单");
+        }
+        if (order.getStatus() == null || order.getStatus() != 1) {
+            throw new RuntimeException("当前订单状态不可支付");
+        }
+        String type = (payType == null || payType.trim().isEmpty()) ? "余额支付" : payType.trim();
+        order.setPayType(type);
+        order.setPayTime(LocalDateTime.now());
+        order.setStatus(2); // 已支付，待接单
+        updateById(order);
+
+        // 支付成功通知
+        try {
+            String name = order.getProductName() == null ? "商品" : order.getProductName();
+            appMessageService.sendToUser(userId, "支付成功",
+                    "您购买的商品【" + name + "】已支付成功，订单号：" + order.getOrderNo()
+                            + "，支付方式：" + type + "。", "系统通知");
+        } catch (Exception ignored) {
+            // 通知失败不影响支付结果
+        }
     }
 
     /**

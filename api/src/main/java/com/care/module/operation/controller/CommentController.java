@@ -1,40 +1,57 @@
 package com.care.module.operation.controller;
 
-import com.care.common.result.Result;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.care.common.result.PageResult;
+import com.care.common.result.Result;
+import com.care.module.operation.entity.DynamicComment;
+import com.care.module.operation.service.DynamicCommentService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+@Api(tags = "评论管理")
 @RestController
 @RequestMapping("/api/operation/comment")
 public class CommentController {
 
+    @Autowired
+    private DynamicCommentService dynamicCommentService;
+
+    @ApiOperation("评论分页")
     @GetMapping("/page")
-    public Result<PageResult<Map<String, Object>>> getPage() {
-        List<Map<String, Object>> list = new ArrayList<>();
-        Map<String, Object> item = new HashMap<>();
-        item.put("id", 1);
-        item.put("content", "这个服务非常好！");
-        item.put("userName", "李明华");
-        item.put("targetType", "order");
-        item.put("targetId", 1);
-        item.put("status", 1);
-        item.put("createTime", "2026-07-01 10:00:00");
-        list.add(item);
-        return Result.success(PageResult.of(1L, list));
+    public Result<PageResult<DynamicComment>> getPage(
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) Integer status) {
+        Page<DynamicComment> pageParam = new Page<>(page, size);
+        LambdaQueryWrapper<DynamicComment> wrapper = new LambdaQueryWrapper<>();
+        if (status != null) {
+            wrapper.eq(DynamicComment::getStatus, status);
+        }
+        wrapper.orderByDesc(DynamicComment::getCreateTime);
+        IPage<DynamicComment> result = dynamicCommentService.page(pageParam, wrapper);
+        return Result.success(PageResult.of(result));
     }
 
+    @ApiOperation("启用/禁用")
     @PutMapping("/{id}/status")
     public Result<Void> updateStatus(@PathVariable Long id, @RequestParam Integer status) {
+        DynamicComment comment = dynamicCommentService.getById(id);
+        if (comment == null) {
+            return Result.error("评论不存在");
+        }
+        comment.setStatus(status);
+        dynamicCommentService.updateById(comment);
         return Result.success();
     }
 
+    @ApiOperation("删除评论")
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Long id) {
+        dynamicCommentService.removeById(id);
         return Result.success();
     }
 }

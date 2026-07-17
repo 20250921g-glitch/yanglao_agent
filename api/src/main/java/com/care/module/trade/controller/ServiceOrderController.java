@@ -61,7 +61,7 @@ public class ServiceOrderController {
     @ApiOperation("Start service")
     @PutMapping("/start/{id}")
     public Result<Void> startService(@PathVariable Long id) {
-        serviceOrderService.updateStatus(id, 3);
+        serviceOrderService.startService(id);
         return Result.ok("开始服务");
     }
 

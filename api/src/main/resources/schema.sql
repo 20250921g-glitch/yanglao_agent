@@ -220,6 +220,8 @@ CREATE TABLE IF NOT EXISTS evaluation (
     score INT COMMENT '评分',
     elder_id BIGINT COMMENT '老人ID',
     elder_name VARCHAR(50) COMMENT '老人姓名',
+    evaluator VARCHAR(100) COMMENT '评估人',
+    conclusion TEXT COMMENT '结论',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     deleted TINYINT DEFAULT 0,
     INDEX idx_elder_id (elder_id)
@@ -295,3 +297,46 @@ INSERT INTO food (name, category, calories, protein, fat, carbohydrate, status) 
 ('米饭', '主食类', 116, 2.6, 0.3, 25.9, 1),
 ('白菜', '蔬菜类', 17, 1.5, 0.1, 3.2, 1),
 ('苹果', '水果类', 52, 0.3, 0.2, 13.7, 1);
+
+-- 机构表
+CREATE TABLE IF NOT EXISTS institution (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(200) COMMENT '机构名称',
+    code VARCHAR(50) COMMENT '机构编码',
+    type VARCHAR(50) COMMENT '机构类型',
+    address VARCHAR(500) COMMENT '地址',
+    contact VARCHAR(100) COMMENT '联系人',
+    phone VARCHAR(20) COMMENT '电话',
+    email VARCHAR(100) COMMENT '邮箱',
+    license VARCHAR(200) COMMENT '执照编号',
+    capacity INT COMMENT '床位容量',
+    staff_count INT COMMENT '员工数',
+    rating DECIMAL(3,1) COMMENT '评分',
+    description TEXT COMMENT '简介',
+    status TINYINT DEFAULT 1 COMMENT '状态 1启用 0禁用',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_name (name),
+    INDEX idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='养老机构';
+
+INSERT INTO institution (name, code, type, address, contact, phone, email, license, capacity, staff_count, rating, description, status) VALUES
+('阳光康泰养老中心', 'YL-001', '综合养老院', '北京市朝阳区安立路 88 号', '王院长', '010-88886666', 'yangguang@example.com', '京民证字第 1101052026001 号', 200, 45, 4.5, '集生活照料、康复护理、医疗照护于一体的综合性养老服务机构。', 1),
+('爱龄家护理院', 'YL-002', '护理院', '北京市海淀区复兴路 66 号', '李主任', '010-66668888', 'ailing@example.com', '京卫证字第 1101082026002 号', 120, 32, 4.2, '专注老年慢病管理和术后康复护理。', 1);
+
+-- 邻里圈评论表
+CREATE TABLE IF NOT EXISTS dynamic_comment (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    dynamic_id BIGINT COMMENT '动态ID',
+    user_id BIGINT COMMENT '评论用户ID',
+    user_name VARCHAR(50) COMMENT '评论用户姓名',
+    content TEXT COMMENT '评论内容',
+    status TINYINT DEFAULT 1 COMMENT '状态 1正常 0禁用',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_dynamic (dynamic_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='邻里圈评论';
+
+INSERT INTO dynamic_comment (dynamic_id, user_id, user_name, content, status) VALUES
+(1, 1, '王阿姨', '说得太好了，点赞支持！', 1),
+(1, 2, '李叔叔', '这个活动我也想参加。', 1),
+(1, 4, '赵奶奶', '感谢分享，很实用。', 1);
