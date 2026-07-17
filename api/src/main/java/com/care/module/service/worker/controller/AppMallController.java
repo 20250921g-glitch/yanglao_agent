@@ -14,6 +14,7 @@ import com.care.module.trade.entity.ProductOrder;
 import com.care.module.trade.entity.ProductOrderItem;
 import com.care.module.trade.mapper.ProductOrderItemMapper;
 import com.care.module.trade.service.ProductOrderService;
+import com.care.module.user.service.AppMessageService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +48,8 @@ public class AppMallController {
     private ElderService elderService;
     @Autowired
     private CacheHelper cacheHelper;
+    @Autowired
+    private AppMessageService appMessageService;
 
     private Long currentUserId(HttpServletRequest request) {
         Object v = request.getAttribute("userId");
@@ -184,6 +187,13 @@ public class AppMallController {
         o.setRemark((String) body.get("remark"));
         o.setStatus(1); // 待付款
         productOrderService.add(o); // 内部生成 orderNo 并 save，回填 id
+
+        // 下单成功后自动给用户发送消息通知
+        try {
+            appMessageService.sendToUser(userId, "订单提交成功",
+                    "您购买的商品【" + p.getName() + "】已提交订单，订单号：" + o.getOrderNo() + "，请及时付款。", "系统通知");
+        } catch (Exception ignored) {
+        }
 
         // 保存订单明细
         ProductOrderItem item = new ProductOrderItem();

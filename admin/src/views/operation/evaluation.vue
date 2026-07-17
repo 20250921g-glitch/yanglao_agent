@@ -28,7 +28,7 @@
     <el-form ref="formRef" :model="form" :rules="rules" label-width="90px">
       <el-form-item label="老人" prop="elderId">
         <el-select v-model="form.elderId" style="width:100%">
-          <el-option v-for="e in elderList" :key="e.id" :value="e.id" :label="e.realName" />
+          <el-option v-for="e in elderList" :key="e.id" :value="e.id" :label="e.name" />
         </el-select>
       </el-form-item>
       <el-form-item label="标题" prop="title"><el-input v-model="form.title" /></el-form-item>

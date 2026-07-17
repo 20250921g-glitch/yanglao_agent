@@ -72,6 +72,8 @@ export const getHealthDataByType = (elderId, recordType) => request.get('/health
 export const getHealthRecordStats = (elderId, recordType) => request.get('/health/record/stats', { params: { elderId, recordType } })
 
   export const getFamilyList = (elderId) => request.get(`/health/family/list/${elderId}`)
+export const getAllFamily = () => request.get('/health/family/all')
+export const getFamilyCandidates = () => request.get('/health/family/candidates')
 export const addFamily = (data) => request.post('/health/family', data)
 export const updateFamily = (data) => request.put('/health/family', data)
 export const deleteFamily = (id) => request.delete(`/health/family/${id}`)

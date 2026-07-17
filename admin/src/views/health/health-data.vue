@@ -21,7 +21,7 @@
       <el-form :inline="true" class="search-form">
         <el-form-item label="老人姓名">
           <el-select v-model="search.elderId" placeholder="请选择老人" style="width:200px" clearable @change="loadData">
-            <el-option v-for="e in elderList" :key="e.id" :value="e.id" :label="e.realName" />
+            <el-option v-for="e in elderList" :key="e.id" :value="e.id" :label="e.name" />
           </el-select>
         </el-form-item>
         <el-form-item label="日期范围">

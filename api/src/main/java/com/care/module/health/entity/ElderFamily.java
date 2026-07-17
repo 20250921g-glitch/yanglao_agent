@@ -14,6 +14,14 @@ public class ElderFamily implements Serializable {
     private String familyName;
     private String relation;
     private String phone;
+    private String remark;
+    private Long appUserId;
+    @TableField(exist = false)
+    private String elderName;
+    @TableField(exist = false)
+    private String userName;
+    @TableField(exist = false)
+    private String userPhone;
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
     @TableField(fill = FieldFill.INSERT_UPDATE)

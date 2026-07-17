@@ -139,9 +139,11 @@ CREATE TABLE elder (
 CREATE TABLE elder_family (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     elder_id BIGINT NOT NULL COMMENT 'elder id',
+    app_user_id BIGINT COMMENT '关联家属用户ID(app_user, FAMILY角色)',
     family_name VARCHAR(100) COMMENT 'family name',
     relation VARCHAR(50) COMMENT 'relation',
     phone VARCHAR(20) COMMENT 'phone',
+    remark VARCHAR(255) COMMENT '备注',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted TINYINT DEFAULT 0,
@@ -970,12 +972,7 @@ INSERT INTO elder (name, gender, age, id_card, phone, address, emergency_contact
 ('刘淑珍', 2, 85, '110104194102189012', '13800138004', '北京市东城区和平里小区8号楼402室', '刘洋', '13900139004', 1),
 ('陈建国', 1, 72, '110105195411253456', '13800138005', '北京市丰台区晓月苑小区1号楼101室', '陈明', '13900139005', 1);
 
-INSERT INTO elder_family (elder_id, family_name, relation, phone) VALUES
-(1, '李晓', '儿子', '13900139001'),
-(1, '王芳', '儿媳', '13900139006'),
-(2, '王芳', '女儿', '13900139002'),
-(3, '张伟', '孙子', '13900139003'),
-(4, '刘洋', '外甥女', '13900139004');
+-- 家属关联数据见文件末尾(app_user 插入之后)，通过子查询关联真实 FAMILY 账号
 
 INSERT INTO health_record (elder_id, record_type, record_value, record_time, remark) VALUES
 (1, '血压', '135/85', '2026-07-01 08:00:00', '正常'),
@@ -1083,12 +1080,27 @@ INSERT INTO transaction_record (user_id, user_name, type, amount, balance, order
 (3, '张德福', '充值', 500.00, 500.00, ''),
 (3, '张德福', '消费', 326.00, 174.00, 'PO20260703003');
 
-INSERT INTO app_user (phone, nickname, status, level_id, points) VALUES
-('13800138001', '李明华', 1, 1, 500),
-('13800138002', '王秀兰', 1, 2, 1200),
-('13800138003', '张德福', 1, 1, 300),
-('13800138004', '刘淑珍', 1, 3, 2000),
-('13800138005', '陈建国', 1, 1, 100);
+INSERT INTO app_user (phone, nickname, status, level_id, points, role) VALUES
+('13800138001', '李明华', 1, 1, 500, 'ELDER'),
+('13800138002', '王秀兰', 1, 2, 1200, 'ELDER'),
+('13800138003', '张德福', 1, 1, 300, 'ELDER'),
+('13800138004', '刘淑珍', 1, 3, 2000, 'ELDER'),
+('13800138005', '陈建国', 1, 1, 100, 'ELDER');
+
+-- 演示家属账号(C端登录: 13800001234 / 123456)，角色为家属，仅关联李明华一位老人
+INSERT INTO app_user (phone, nickname, password, status, level_id, points, role, source) VALUES
+('13800001234', '演示用户', '$2b$10$220qQ.q4sU0MHyMSLyXVauF88aTJWsbs0X7t9kdkEPH7ZgKxCrAOm', 1, 1, 200, 'FAMILY', '后台创建');
+
+-- 其他规范家属账号(演示用：姓名/电话与老人家属对应；密码留空，仅用于家属管理关联展示，保证"和用户对得上")
+INSERT INTO app_user (phone, nickname, real_name, status, level_id, points, role) VALUES
+('13900001111', '张阿姨', '张阿姨', 1, 1, 0, 'FAMILY'),
+('13900002222', '王叔叔', '王叔叔', 1, 1, 0, 'FAMILY'),
+('13900003333', '小李', '小李', 1, 1, 0, 'FAMILY'),
+('13900004444', '周阿姨', '周阿姨', 1, 1, 0, 'FAMILY');
+
+-- 老人健康档案归属(app_user_id)：李明华归演示家属账号；其余老人各归同手机号的老人账号(本人自管)，避免一个账号关联全部老人
+UPDATE elder SET app_user_id = (SELECT id FROM app_user WHERE phone = '13800001234' LIMIT 1) WHERE name = '李明华';
+UPDATE elder e JOIN app_user u ON e.phone = u.phone SET e.app_user_id = u.id WHERE e.name IN ('王秀兰', '张德福', '刘淑珍', '陈建国');
 
 INSERT INTO user_tag (tag_name, tag_type, color, status) VALUES
 ('潜在客户', '客户类型', '#909399', 1),
@@ -1478,3 +1490,12 @@ INSERT INTO sys_operation_log (user_id, user_name, module, operation, method, re
 (1, 'admin', '用户管理', '查询用户列表', 'GET', '/api/user/page', '127.0.0.1', 'current=1&size=10', 1),
 (1, 'admin', '养老服务', '查询服务项目', 'GET', '/api/product/service-project/page', '127.0.0.1', 'current=1&size=10', 1),
 (1, 'admin', '消息管理', '查询消息列表', 'GET', '/api/user/message/page', '127.0.0.1', 'current=1&size=10', 1);
+
+-- 家属关联真实家属账号(每老人对应一位 FAMILY 角色用户；姓名/电话取自该用户，避免"和用户对不上")
+-- 注意：必须放在 app_user 插入之后，子查询才能解析出 id
+INSERT INTO elder_family (elder_id, app_user_id, family_name, relation, phone) VALUES
+(1, (SELECT id FROM app_user WHERE phone='13800001234' LIMIT 1), '演示用户', '儿子', '13800001234'),
+(2, (SELECT id FROM app_user WHERE phone='13900001111' LIMIT 1), '张阿姨', '女儿', '13900001111'),
+(3, (SELECT id FROM app_user WHERE phone='13900002222' LIMIT 1), '王叔叔', '儿子', '13900002222'),
+(4, (SELECT id FROM app_user WHERE phone='13900003333' LIMIT 1), '小李', '外甥女', '13900003333'),
+(5, (SELECT id FROM app_user WHERE phone='13900004444' LIMIT 1), '周阿姨', '女儿', '13900004444');

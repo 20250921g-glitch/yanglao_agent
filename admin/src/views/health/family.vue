@@ -12,7 +12,7 @@
     </el-form>
     <el-table :data="tableData" stripe v-loading="loading">
       <el-table-column prop="elderName" label="关联老人" />
-      <el-table-column prop="name" label="家属姓名" />
+      <el-table-column prop="familyName" label="家属姓名" />
       <el-table-column prop="relation" label="关系" />
       <el-table-column prop="phone" label="联系电话" width="130" />
       <el-table-column prop="remark" label="备注" show-overflow-tooltip />
@@ -31,12 +31,17 @@
     <el-form ref="formRef" :model="form" :rules="rules" label-width="90px">
       <el-form-item label="关联老人" prop="elderId">
         <el-select v-model="form.elderId" style="width:100%">
-          <el-option v-for="e in elderList" :key="e.id" :value="e.id" :label="e.realName" />
+          <el-option v-for="e in elderList" :key="e.id" :value="e.id" :label="e.name" />
         </el-select>
       </el-form-item>
-      <el-form-item label="家属姓名" prop="name"><el-input v-model="form.name" /></el-form-item>
+      <el-form-item label="家属(用户)" prop="appUserId">
+        <el-select v-model="form.appUserId" style="width:100%" @change="onUserChange" placeholder="选择真实家属账号">
+          <el-option v-for="u in candidateList" :key="u.id" :value="u.id" :label="(u.realName || u.username) + ' (' + u.phone + ')'" />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="家属姓名"><el-input v-model="form.familyName" disabled /></el-form-item>
       <el-form-item label="关系" prop="relation"><el-input v-model="form.relation" /></el-form-item>
-      <el-form-item label="联系电话" prop="phone"><el-input v-model="form.phone" /></el-form-item>
+      <el-form-item label="联系电话"><el-input v-model="form.phone" disabled /></el-form-item>
       <el-form-item label="备注"><el-input v-model="form.remark" type="textarea" /></el-form-item>
     </el-form>
     <template #footer>
@@ -49,20 +54,23 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getFamilyList, addFamily, updateFamily, deleteFamily, getElderList } from '@/api'
+import { getAllFamily, addFamily, updateFamily, deleteFamily, getElderList, getFamilyCandidates } from '@/api'
 
 const loading = ref(false), tableData = ref([]), pageNum = ref(1), pageSize = ref(10), total = ref(0)
 const search = reactive({ name: '' })
 const dialogVisible = ref(false), isEdit = ref(false), formRef = ref(null)
-const form = reactive({ id: null, elderId: null, name: '', relation: '', phone: '', remark: '' })
+const form = reactive({ id: null, elderId: null, appUserId: null, familyName: '', relation: '', phone: '', remark: '' })
 const elderList = ref([])
-const rules = { elderId: [{ required: true, message: '请选择关联老人', trigger: 'change' }], name: [{ required: true, message: '请输入姓名', trigger: 'blur' }], phone: [{ required: true, message: '请输入电话', trigger: 'blur' }] }
+const candidateList = ref([])
+const rules = { elderId: [{ required: true, message: '请选择关联老人', trigger: 'change' }], appUserId: [{ required: true, message: '请选择家属账号', trigger: 'change' }], relation: [{ required: true, message: '请输入关系', trigger: 'blur' }] }
 
 const load = async () => {
   loading.value = true
   try {
-    const res = await getFamilyList(0)
-    tableData.value = res.data || []
+    const res = await getAllFamily()
+    const all = res.data || []
+    const keyword = (search.name || '').trim()
+    tableData.value = keyword ? all.filter(r => r.familyName && r.familyName.includes(keyword)) : all
     total.value = tableData.value.length
   } catch (e) { /* handled */ }
   finally { loading.value = false }
@@ -72,9 +80,21 @@ const loadElders = async () => {
   try { const res = await getElderList(); elderList.value = res.data || [] } catch (e) {}
 }
 
+const loadCandidates = async () => {
+  try { const res = await getFamilyCandidates(); candidateList.value = res.data || [] } catch (e) {}
+}
+
+const onUserChange = (id) => {
+  const u = candidateList.value.find(x => x.id === id)
+  if (u) {
+    form.familyName = u.realName || u.username
+    form.phone = u.phone
+  }
+}
+
 const openDialog = (row) => {
   if (row) { Object.assign(form, row); isEdit.value = true }
-  else { formRef.value?.resetFields(); Object.assign(form, { id: null, elderId: null, name: '', relation: '', phone: '', remark: '' }); isEdit.value = false }
+  else { formRef.value?.resetFields(); Object.assign(form, { id: null, elderId: null, appUserId: null, familyName: '', relation: '', phone: '', remark: '' }); isEdit.value = false }
   dialogVisible.value = true
 }
 
@@ -90,7 +110,7 @@ const handleDelete = async (id) => {
   try { await deleteFamily(id); ElMessage.success('删除成功'); load() } catch (e) {}
 }
 
-onMounted(() => { load(); loadElders() })
+onMounted(() => { load(); loadElders(); loadCandidates() })
 </script>
 
 <style scoped>

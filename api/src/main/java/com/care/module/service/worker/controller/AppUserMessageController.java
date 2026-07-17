@@ -55,6 +55,11 @@ public class AppUserMessageController {
     private List<AppMessage> visibleMessages(Long userId, String type) {
         LambdaQueryWrapper<AppMessage> w = new LambdaQueryWrapper<>();
         w.eq(AppMessage::getStatus, 1);
+        // 广播消息(target 为 null 或 'all') 或 指定当前用户(target = 当前 userId) 才可见，
+        // 保证业务事件自动通知(指向具体用户)不会泄漏给其他人。
+        w.and(wp -> wp.eq(AppMessage::getTarget, "all")
+                .or().isNull(AppMessage::getTarget)
+                .or().eq(AppMessage::getTarget, String.valueOf(userId)));
         if (type != null && !type.trim().isEmpty()) {
             w.eq(AppMessage::getType, type);
         }

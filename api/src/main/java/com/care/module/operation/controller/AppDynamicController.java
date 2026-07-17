@@ -16,6 +16,7 @@ import com.care.module.operation.service.DynamicLikeService;
 import com.care.module.operation.service.DynamicService;
 import com.care.module.user.entity.AppUser;
 import com.care.module.user.service.AppUserService;
+import com.care.module.user.service.AppMessageService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,6 +51,8 @@ public class AppDynamicController {
     private DynamicCommentService commentService;
     @Autowired
     private AppUserService appUserService;
+    @Autowired
+    private AppMessageService appMessageService;
     @Autowired
     private CacheHelper cacheHelper;
 
@@ -250,6 +253,16 @@ public class AppDynamicController {
                 }
             }
             dynamicService.evictCounts(dynId);
+            // 自动通知动态作者（本人点赞自己的动态不通知）
+            if (nowLiked && d.getUserId() != null && !d.getUserId().equals(userId)) {
+                try {
+                    AppUser me = appUserService.getById(userId);
+                    String name = (me != null && me.getUsername() != null) ? me.getUsername() : "有人";
+                    appMessageService.sendToUser(d.getUserId(), "收到新赞",
+                            name + " 赞了您的动态。", "系统通知");
+                } catch (Exception ignored) {
+                }
+            }
             int likeCount = (int) likeService.countByDynamicId(dynId);
             Map<String, Object> m = new HashMap<>();
             m.put("liked", nowLiked);
@@ -317,6 +330,17 @@ public class AppDynamicController {
         c.setContent(content);
         commentService.save(c);
         dynamicService.evictCounts(dynId);
+        // 自动通知动态作者（本人评论自己的动态不通知）
+        if (d.getUserId() != null && !d.getUserId().equals(userId)) {
+            try {
+                AppUser me = appUserService.getById(userId);
+                String name = (me != null && me.getUsername() != null) ? me.getUsername() : "有人";
+                String preview = content.length() > 20 ? content.substring(0, 20) + "…" : content;
+                appMessageService.sendToUser(d.getUserId(), "收到新评论",
+                        name + " 评论了您的动态：「" + preview + "」", "系统通知");
+            } catch (Exception ignored) {
+            }
+        }
         int commentCount = (int) commentService.countByDynamicId(dynId);
         Map<String, Object> m = new HashMap<>();
         m.put("commentCount", commentCount);

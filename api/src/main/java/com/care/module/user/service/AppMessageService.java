@@ -64,4 +64,20 @@ public class AppMessageService extends ServiceImpl<AppMessageMapper, AppMessage>
     public void delete(Long id) {
         removeById(id);
     }
+
+    /**
+     * 便捷方法：给指定用户发送一条系统通知。
+     * target 设为该用户 userId，配合 C 端消息查询的 target 过滤，
+     * 保证该消息仅对目标用户可见（不影响后台群发的广播消息）。
+     */
+    public void sendToUser(Long userId, String title, String content, String type) {
+        AppMessage m = new AppMessage();
+        m.setTitle(title);
+        m.setContent(content);
+        m.setType(type);
+        m.setTarget(userId == null ? "all" : String.valueOf(userId));
+        m.setStatus(1);
+        m.setSendTime(LocalDateTime.now());
+        save(m);
+    }
 }

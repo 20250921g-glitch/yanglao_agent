@@ -4,19 +4,26 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.care.module.health.entity.Elder;
 import com.care.module.health.entity.HealthRecord;
 import com.care.module.health.mapper.HealthRecordMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 public class HealthRecordService extends ServiceImpl<HealthRecordMapper, HealthRecord> {
+
+    @Autowired
+    private ElderService elderService;
 
     public IPage<HealthRecord> getPage(Integer pageNum, Integer pageSize, Long elderId, String recordType,
                                         LocalDate startDate, LocalDate endDate) {
@@ -35,7 +42,39 @@ public class HealthRecordService extends ServiceImpl<HealthRecordMapper, HealthR
             wrapper.le(HealthRecord::getRecordTime, endDate.plusDays(1).atStartOfDay());
         }
         wrapper.orderByDesc(HealthRecord::getRecordTime);
-        return page(page, wrapper);
+        IPage<HealthRecord> result = page(page, wrapper);
+
+        // 若老人姓名缺失，根据 elder_id 回查 elder 表填充（兼容历史数据）
+        if (result != null && result.getRecords() != null && !result.getRecords().isEmpty()) {
+            Set<Long> elderIds = new HashSet<>();
+            for (HealthRecord r : result.getRecords()) {
+                if (isBlank(r.getElderName()) && r.getElderId() != null) {
+                    elderIds.add(r.getElderId());
+                }
+            }
+            if (!elderIds.isEmpty()) {
+                List<Elder> elders = elderService.listByIds(new ArrayList<>(elderIds));
+                Map<Long, String> nameMap = new HashMap<>();
+                for (Elder e : elders) {
+                    if (e != null && e.getId() != null) {
+                        nameMap.put(e.getId(), e.getName());
+                    }
+                }
+                for (HealthRecord r : result.getRecords()) {
+                    if (isBlank(r.getElderName()) && r.getElderId() != null) {
+                        String name = nameMap.get(r.getElderId());
+                        if (name != null) {
+                            r.setElderName(name);
+                        }
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    private boolean isBlank(String s) {
+        return s == null || s.trim().isEmpty();
     }
 
     public List<HealthRecord> getByElderId(Long elderId) {
@@ -96,6 +135,12 @@ public class HealthRecordService extends ServiceImpl<HealthRecordMapper, HealthR
     public void add(HealthRecord record) {
         if (record.getRecordTime() == null) {
             record.setRecordTime(LocalDateTime.now());
+        }
+        if (isBlank(record.getElderName()) && record.getElderId() != null) {
+            Elder elder = elderService.getById(record.getElderId());
+            if (elder != null) {
+                record.setElderName(elder.getName());
+            }
         }
         save(record);
     }

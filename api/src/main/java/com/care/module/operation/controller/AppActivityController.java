@@ -10,6 +10,7 @@ import com.care.module.operation.service.ActivityRegistrationService;
 import com.care.module.operation.service.ActivityService;
 import com.care.module.user.entity.AppUser;
 import com.care.module.user.service.AppUserService;
+import com.care.module.user.service.AppMessageService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.Data;
@@ -33,6 +34,8 @@ public class AppActivityController {
     private ActivityRegistrationService registrationService;
     @Autowired
     private AppUserService appUserService;
+    @Autowired
+    private AppMessageService appMessageService;
     @Autowired
     private HttpServletRequest request;
 
@@ -99,6 +102,13 @@ public class AppActivityController {
         reg.setStatus(1); // 报名成功
         reg.setRemark(dto.getRemark());
         registrationService.save(reg);
+
+        // 报名成功后自动给用户发送消息通知
+        try {
+            appMessageService.sendToUser(userId, "活动报名成功",
+                    "您已成功报名活动【" + activity.getName() + "】，请留意活动开始时间。", "系统通知");
+        } catch (Exception ignored) {
+        }
 
         Integer pc = activity.getParticipantCount() == null ? 0 : activity.getParticipantCount();
         activity.setParticipantCount(pc + 1);

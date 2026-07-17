@@ -125,6 +125,10 @@ public class AppUserService extends ServiceImpl<AppUserMapper, AppUser> {
         return user;
     }
 
+    public List<AppUser> listByRole(String role) {
+        return list(new LambdaQueryWrapper<AppUser>().eq(AppUser::getRole, role).orderByAsc(AppUser::getId));
+    }
+
     public void add(AppUser user) {
         save(user);
     }
@@ -202,6 +206,13 @@ public class AppUserService extends ServiceImpl<AppUserMapper, AppUser> {
         user.setUsername(nick != null && !nick.trim().isEmpty() ? nick.trim() : "用户" + phone);
         user.setSource("APP注册");
         user.setStatus(1);
+        // 用户类型：校验为合法枚举，否则默认 FAMILY 家属
+        String role = dto.getRole();
+        if (role == null || !(role.equals("ELDER") || role.equals("FAMILY")
+                || role.equals("VOLUNTEER") || role.equals("STAFF"))) {
+            role = "FAMILY";
+        }
+        user.setRole(role);
         this.save(user);
         return user;
     }

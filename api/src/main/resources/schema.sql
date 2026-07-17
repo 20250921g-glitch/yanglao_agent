@@ -100,9 +100,11 @@ CREATE TABLE IF NOT EXISTS elder (
 CREATE TABLE IF NOT EXISTS elder_family (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     elder_id BIGINT NOT NULL COMMENT '老人ID',
+    app_user_id BIGINT COMMENT '关联家属用户ID(app_user, FAMILY角色)',
     family_name VARCHAR(50) COMMENT '家属姓名',
     relation VARCHAR(20) COMMENT '与老人关系',
     phone VARCHAR(20) COMMENT '联系电话',
+    remark VARCHAR(255) COMMENT '备注',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted TINYINT DEFAULT 0,

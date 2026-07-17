@@ -12,6 +12,7 @@ import com.care.module.product.entity.ServiceProject;
 import com.care.module.product.service.ServiceProjectService;
 import com.care.module.trade.entity.ServiceOrder;
 import com.care.module.trade.service.ServiceOrderService;
+import com.care.module.user.service.AppMessageService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +43,8 @@ public class AppServiceController {
     private ElderService elderService;
     @Autowired
     private CacheHelper cacheHelper;
+    @Autowired
+    private AppMessageService appMessageService;
 
     private Long currentUserId(HttpServletRequest request) {
         Object v = request.getAttribute("userId");
@@ -167,6 +170,12 @@ public class AppServiceController {
             return Result.error("请选择预约时间");
         }
         serviceOrderService.add(o); // 内部生成 orderNo
+        // 预约成功后自动给用户发送消息通知
+        try {
+            appMessageService.sendToUser(userId, "服务预约成功",
+                    "您为老人【" + elder.getName() + "】预约的【" + p.getName() + "】已提交，等待服务人员接单。", "系统通知");
+        } catch (Exception ignored) {
+        }
         return Result.ok("预约成功，等待服务人员接单");
     }
 

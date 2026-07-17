@@ -10,4 +10,6 @@ public class AppUserRegisterDTO {
     private String smsCode;
     private String captchaKey;
     private String captchaCode;
+    // 用户类型: ELDER老人 / FAMILY家属 / VOLUNTEER志愿者 / STAFF工作人员，不传默认 FAMILY
+    private String role;
 }

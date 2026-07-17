@@ -44,9 +44,16 @@ public class ServiceWorkerTagController {
         return Result.ok("新增成功");
     }
 
+    @ApiOperation("查询标签详情")
+    @GetMapping("/{id}")
+    public Result<ServiceWorkerTag> getById(@PathVariable Long id) {
+        return Result.success(tagService.getById(id));
+    }
+
     @ApiOperation("修改标签")
-    @PutMapping
-    public Result<Void> update(@RequestBody ServiceWorkerTag tag) {
+    @PutMapping("/{id}")
+    public Result<Void> update(@PathVariable Long id, @RequestBody ServiceWorkerTag tag) {
+        tag.setId(id);
         tagService.updateTag(tag);
         return Result.ok("修改成功");
     }
