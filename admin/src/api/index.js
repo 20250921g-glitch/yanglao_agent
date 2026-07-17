@@ -280,7 +280,7 @@ export const getActivityList = () => request.get('/operation/activity/list')
 export const getActivityRegistrationPage = (params) => request.get('/operation/activity-registration/page', { params })
 export const getActivityRegistrationById = (id) => request.get(`/operation/activity-registration/${id}`)
 export const addActivityRegistration = (data) => request.post('/operation/activity-registration', data)
-export const updateActivityRegistrationStatus = (id, status) => request.put(`/operation/activity-registration/${id}/status`, { params: { status } })
+export const updateActivityRegistrationStatus = (id, status) => request.put(`/operation/activity-registration/${id}/status`, null, { params: { status } })
 export const deleteActivityRegistration = (id) => request.delete(`/operation/activity-registration/${id}`)
 
 // ============ 养老机构管理 ============
@@ -290,7 +290,7 @@ export const getInstitutionById = (id) => request.get(`/system/institution/${id}
 export const addInstitution = (data) => request.post('/system/institution', data)
 export const updateInstitution = (data) => request.put('/system/institution', data)
 export const deleteInstitution = (id) => request.delete(`/system/institution/${id}`)
-export const updateInstitutionStatus = (id, status) => request.put(`/system/institution/status/${id}`, { params: { status } })
+export const updateInstitutionStatus = (id, status) => request.put(`/system/institution/status/${id}`, null, { params: { status } })
 
 // ============ 健康资讯管理 ============
 export const getHealthNewsPage = (params) => request.get('/operation/health-news/page', { params })
@@ -313,7 +313,7 @@ export const getHealthServiceOrderById = (id) => request.get(`/health/service-or
 // ============ 积分管理 ============
 export const getPointsPage = (params) => request.get('/user/points/page', { params })
 export const getPointsStats = (userId, type) => request.get('/user/points/stats', { params: { userId, type } })
-export const adjustPoints = (userId, amount, type, source, remark) => request.put('/user/points/adjust', { params: { userId, amount, type, source, remark } })
+export const adjustPoints = (userId, amount, type, source, remark) => request.put('/user/points/adjust', null, { params: { userId, amount, type, source, remark } })
 
 // ============ 积分规则配置 ============
 export const getPointRulePage = (params) => request.get('/point-rule/page', { params })
@@ -325,8 +325,8 @@ export const deletePointRule = (id) => request.delete(`/point-rule/${id}`)
 // ============ 动态管理 ============
 export const getDynamicPage = (params) => request.get('/operation/dynamic/page', { params })
 export const getDynamicById = (id) => request.get(`/operation/dynamic/${id}`)
-export const approveDynamic = (id, remark) => request.put(`/operation/dynamic/approve/${id}`, { params: { remark } })
-export const rejectDynamic = (id, remark) => request.put(`/operation/dynamic/reject/${id}`, { params: { remark } })
+export const approveDynamic = (id, remark) => request.put(`/operation/dynamic/approve/${id}`, null, { params: { remark } })
+export const rejectDynamic = (id, remark) => request.put(`/operation/dynamic/reject/${id}`, null, { params: { remark } })
 export const offlineDynamic = (id) => request.put(`/operation/dynamic/offline/${id}`)
 export const addDynamic = (data) => request.post('/operation/dynamic', data)
 export const deleteDynamic = (id) => request.delete(`/operation/dynamic/${id}`)
@@ -338,7 +338,7 @@ export const getRecipeById = (id) => request.get(`/operation/recipe/${id}`)
 export const addRecipe = (data) => request.post('/operation/recipe', data)
 export const updateRecipe = (data) => request.put('/operation/recipe', data)
 export const deleteRecipe = (id) => request.delete(`/operation/recipe/${id}`)
-export const changeRecipeStatus = (id, status) => request.put(`/operation/recipe/status/${id}`, { params: { status } })
+export const changeRecipeStatus = (id, status) => request.put(`/operation/recipe/status/${id}`, null, { params: { status } })
 
 // ============ 疾病管理 ============
 export const getDiseasePage = (params) => request.get('/health/disease/page', { params })
@@ -347,7 +347,7 @@ export const getDiseaseById = (id) => request.get(`/health/disease/${id}`)
 export const addDisease = (data) => request.post('/health/disease', data)
 export const updateDisease = (data) => request.put('/health/disease', data)
 export const deleteDisease = (id) => request.delete(`/health/disease/${id}`)
-export const changeDiseaseStatus = (id, status) => request.put(`/health/disease/status/${id}`, { params: { status } })
+export const changeDiseaseStatus = (id, status) => request.put(`/health/disease/status/${id}`, null, { params: { status } })
 
 // ============ 视频管理 ============
 export const getVideoPage = (params) => request.get('/operation/video/page', { params })
@@ -356,7 +356,7 @@ export const getVideoById = (id) => request.get(`/operation/video/${id}`)
 export const addVideo = (data) => request.post('/operation/video', data)
 export const updateVideo = (data) => request.put('/operation/video', data)
 export const deleteVideo = (id) => request.delete(`/operation/video/${id}`)
-export const changeVideoStatus = (id, status) => request.put(`/operation/video/status/${id}`, { params: { status } })
+export const changeVideoStatus = (id, status) => request.put(`/operation/video/status/${id}`, null, { params: { status } })
 
 // ============ 运营管理 - 话题管理 ============
 export const getTopicPage = (params) => request.get('/operation/topic/page', { params })
@@ -372,7 +372,7 @@ export const deleteCommunity = (id) => request.delete(`/operation/community/${id
 
 // ============ 运营管理 - 评论管理 ============
 export const getCommentPage = (params) => request.get('/operation/comment/page', { params })
-export const updateCommentStatus = (id, status) => request.put(`/operation/comment/${id}/status`, { params: { status } })
+export const updateCommentStatus = (id, status) => request.put(`/operation/comment/${id}/status`, null, { params: { status } })
 export const deleteComment = (id) => request.delete(`/operation/comment/${id}`)
 
 // ============ 运营管理 - 标签管理 ============
@@ -430,7 +430,7 @@ export const deletePaymentConfig = (id) => request.delete(`/trade/payment-config
 
 // ============ 交易管理 - 物流配送 ============
 export const getDeliveryPage = (params) => request.get('/trade/delivery/page', { params })
-export const updateDeliveryStatus = (id, status) => request.put(`/trade/delivery/${id}/status`, { params: { status } })
+export const updateDeliveryStatus = (id, status) => request.put(`/trade/delivery/${id}/status`, null, { params: { status } })
 
 // ============ 交易管理 - 财务记录 ============
 export const getFinancePage = (params) => request.get('/trade/finance/page', { params })
@@ -490,28 +490,28 @@ export const deleteConversation = (id) => request.delete(`/user/conversation/${i
 export const getGrowthRulePage = (params) => request.get('/user/growth-rule/page', { params })
 export const saveGrowthRule = (data) => request.post('/user/growth-rule', data)
 export const updateGrowthRule = (data) => request.put('/user/growth-rule', data)
-export const updateGrowthRuleStatus = (id, status) => request.put(`/user/growth-rule/${id}/status`, { params: { status } })
+export const updateGrowthRuleStatus = (id, status) => request.put(`/user/growth-rule/${id}/status`, null, { params: { status } })
 export const deleteGrowthRule = (id) => request.delete(`/user/growth-rule/${id}`)
 
 // ============ 商品管理 - 服务项目管理 ============
 export const getServiceProjectPage = (params) => request.get('/product/service-project/page', { params })
 export const saveServiceProject = (data) => request.post('/product/service-project', data)
 export const updateServiceProject = (data) => request.put('/product/service-project', data)
-export const updateServiceProjectStatus = (id, status) => request.put(`/product/service-project/${id}/status`, { params: { status } })
+export const updateServiceProjectStatus = (id, status) => request.put(`/product/service-project/${id}/status`, null, { params: { status } })
 export const deleteServiceProject = (id) => request.delete(`/product/service-project/${id}`)
 
 // ============ 运营管理 - 活动字段 ============
 export const getActivityFieldPage = (params) => request.get('/operation/activity-field/page', { params })
 export const saveActivityField = (data) => request.post('/operation/activity-field', data)
 export const updateActivityField = (data) => request.put('/operation/activity-field', data)
-export const updateActivityFieldStatus = (id, status) => request.put(`/operation/activity-field/${id}/status`, { params: { status } })
+export const updateActivityFieldStatus = (id, status) => request.put(`/operation/activity-field/${id}/status`, null, { params: { status } })
 export const deleteActivityField = (id) => request.delete(`/operation/activity-field/${id}`)
 
 // ============ 系统管理 - 药品单位 ============
 export const getMedicineUnitPage = (params) => request.get('/system/medicine-unit/page', { params })
 export const saveMedicineUnit = (data) => request.post('/system/medicine-unit', data)
 export const updateMedicineUnit = (data) => request.put('/system/medicine-unit', data)
-export const updateMedicineUnitStatus = (id, status) => request.put(`/system/medicine-unit/${id}/status`, { params: { status } })
+export const updateMedicineUnitStatus = (id, status) => request.put(`/system/medicine-unit/${id}/status`, null, { params: { status } })
 export const deleteMedicineUnit = (id) => request.delete(`/system/medicine-unit/${id}`)
 
 // ============ 系统管理 - 缓存监控 ============
